@@ -9,12 +9,12 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 我们知道在测试系统稳定性的时候，对不同类型的服务器进行大批量暴力测试，才能更容易说明问题。但是原生态的[LKP](https://github.com/intel/lkp-tests "LKP")套件主要是用于在单台Linux服务器上测试系统的稳定性，如果需要部署多台不同类型的服务器进行同时测试，则需要手动登录每一台服务器进行设置。因此lkp-extent主要用于扩展[LKP](https://github.com/intel/lkp-tests "LKP")功能，解决其在这方面的不足，设计出一个 一对多点的运作模式。
 
 #### 原理
-                                             lkp-server
-                                                  |
-          +-----------------+----------------+----------------+--------------------+
-          |                    |                  |                  |                      |
-          |                    |                  |                  |                      |
-    lkp-node         lkp-node          .....            lkp-node           lkp-node
+                                         lkp-server
+                                             |
+          +-----------------+----------------+----------------+-------------------+
+          |                 |                |                |                   |
+          |                 |                |                |                   |
+       lkp-node         lkp-node           .....           lkp-node           lkp-node
 
 如图，首先我们将一台服务器称为node，而lkp-extent则需要存在一个server node和若干个client node。server node会进入监听模式，client node会根据自身的服务器配置相继接入对应的server node。这样server node上面，就可以对client node进行全方位的操作，下面简单例举几个常见的指令，
   1.  查看有哪些待测服务器
