@@ -1,0 +1,60 @@
+#!/bin/bash
+
+help_doc="run the specified testcase"
+
+usage() {
+    lkp_show "Usage: $PNAME $1 [OPTION] testcase"
+    lkp_print "\nrun the specified testcase\n"
+    lkp_print "\nOptions:\n"
+    lkp_print "\t-d enable debug mode\n"
+    lkp_print "\t-h list help\n"
+    lkp_print "\nTo get more help, Please see the README.md\n"
+}
+
+source $ROOT_DIR/lib/env.sh
+source $ROOT_DIR/lib/log.sh
+source $ROOT_DIR/lib/lkp.sh
+source $ROOT_DIR/lib/container.sh
+
+[ $# -eq 0 ] && {
+    usage $PROGRAM
+    exit 1
+}
+
+# parse parameters
+while getopts ":hd" opt; do
+    case $opt in
+    d) set -x;;
+    h) usage $PROGRAM && exit 1;;
+    ?) usage $PROGRAM && exit 1;;
+    esac
+done
+
+shift $((OPTIND - 1))
+testcases="$@"  # testcase group
+
+do_local_test(){
+    lkp_run_testcases "$LKP_DIR/jobs" "$JOB_WORKDIR" "$@"
+}
+
+current_run(){
+    # if VM_CNT > 0, start container test
+    if [ $VM_CNT -gt 0 ]; then
+        do_container_test "docker" $@
+    else
+        do_local_test $@
+    fi
+}
+
+main () {
+    lkp_log2f LOG_INF "$PNAME run $@\n"
+    if [ $NODE_ALL -ne 0 ]; then
+        lkp_show "Function(all node) is not implemented"
+    elif [ $NODE_ID -ne 0 ]; then
+        lkp_show "Function(specify node) is not implemented"
+    else
+        current_run $@
+    fi
+}
+
+main $testcases

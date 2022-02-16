@@ -1,0 +1,41 @@
+#!/bin/bash
+
+help_doc="update testcase"
+
+usage() {
+    lkp_show "Usage: $PNAME $1 [OPTION]"
+    lkp_print "\nupdate testcase for lkp-extent \n"
+    lkp_print "\nOptions:\n"
+    lkp_print "\t-d enable debug mode\n"
+    lkp_print "\t-h list help\n"
+    lkp_print "\nTo get more help, Please see the README.md\n"
+}
+
+source $ROOT_DIR/lib/env.sh
+source $ROOT_DIR/lib/log.sh
+
+# parse parameters
+while getopts ":hd" opt; do
+    case $opt in
+    d) set -x;;
+    h) usage $PROGRAM && exit 1;;
+    ?) usage $PROGRAM && exit 1;;
+    esac
+done
+
+do_update_current(){
+    lkp_show "git update $LKP_PRJ"
+    cd $LKP_PRJ;git pull
+}
+
+main () {
+    if [ $NODE_ALL -ne 0 ]; then
+        lkp_show "Function(all node) is not implemented"
+    elif [ $NODE_ID -ne 0 ]; then
+        lkp_show "Function(specify node) is not implemented"
+    else
+        do_update_current
+    fi
+}
+
+main $@
