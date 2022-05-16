@@ -1,3 +1,5 @@
+![img](images/lkp.png)
+
 # lkp-extent
 lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")项目在容器环境下的压力相关测试，从而增加Linux系统的ras特性。目前主要分为如下几个方向：
 1. 增加LKP远程管理分发机制
