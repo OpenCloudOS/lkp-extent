@@ -34,3 +34,9 @@ DOCKER_INAME="$(hostname | tr 'A-Z' 'a-z')"
 
 # job path
 JOB_WORKDIR=$WORKSPACE/jobs
+
+#src path
+SRC_PATH=$ROOT_DIR/src
+
+#muduo 
+MUDUO_URL="https://github.com/chenshuo/muduo.git"
