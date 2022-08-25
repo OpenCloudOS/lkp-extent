@@ -68,11 +68,20 @@ int main(int argc, char *argv[])
     send(sfd,sendline,LEN,0);
 
     
-    // while(1){
-    //     sleep(1);
-    //     recv(sfd,sendline,LEN,0);
-    //     cout<<"CMDclient recv:"<<sendline<<endl;
-    // }
+    while(1){
+        sleep(1);
+        int tmp = recv(sfd,sendline,LEN,0);
+        if(tmp < 0){
+            perror("recv error!");
+            break;
+        }
+        else if(tmp == 0){
+            cout<<"连接关闭"<<endl;
+            break;
+        }
+        cout<<"CMDclient 接收到的信息:"<<sendline<<endl;
+        break;
+    }
     
     close(sfd);
 

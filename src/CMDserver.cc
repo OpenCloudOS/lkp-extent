@@ -68,16 +68,20 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
     // LOG_INFO << conn->name() << " echo " << msg.size() << " bytes at " << time.toString();
     // conn->send(msg);
 
-    //向CMDclient发送
-    // printf("收到客户端的数据：%s\n",msg);
-    // char bufTemp[4096];
-    // memcpy(bufTemp, msg.c_str(), sizeof(bufTemp));
-    // if (send(CMDcfd, bufTemp, sizeof(bufTemp), 0) < 0)
-    // {
-    //     perror("发送给CMDclient 失败\n");
-    // }
+    //TO DO :: 非阻塞
 
+    // 向CMDclient发送
     printf("收到客户端的数据：%s\n",msg.data());
+    // char bufTemp[4096];
+    // memcpy(bufTemp, msg, sizeof(bufTemp));
+    int tmp = send(CMDcfd, msg.data(), msg.size(),0);
+    if (tmp < 0)
+    {
+        perror("发送给CMDclient 失败\n");
+    }
+    else if(tmp == 0){
+        close(CMDcfd);
+    }
 }
 
 //建立进程通信的套接字
