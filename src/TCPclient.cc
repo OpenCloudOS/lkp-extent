@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/time.h>
+#include<thread>
 
 // #include"help.h"
 
@@ -16,8 +17,27 @@
 using namespace std;
 
 
+void runEvery(int sockfd,int seconds){
+    while(1){
+        char buf[LEN] = "OK";
+        int tmp = send(sockfd,buf,LEN,0);
+
+        if (tmp <= 0)
+        {
+            perror("wrong");
+        }
+
+        sleep(seconds);
+    }
+}
+
 int main(int argc, char **argv)
 {
+    if(argc == 1){
+        cout<<"请输入：端口号 发送OK的间隔"<<endl;
+        return 0;
+    }
+
     int sockfd;
     struct sockaddr_in servaddr;
     int n;
@@ -34,12 +54,18 @@ int main(int argc, char **argv)
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    
+
     int port = 7777;
     if(argc >= 2){
-        port = stoi(argv[1]);;
+        port = stoi(argv[1]);
     }
     servaddr.sin_port = htons(port);
+
+
+    int seconds = 5;
+    if(argc >= 3){
+        seconds = stoi(argv[1]);
+    }
 
 
     //连接
@@ -50,6 +76,9 @@ int main(int argc, char **argv)
     }
 
     printf("连接成功\n");
+
+
+    thread sendRunEvery(runEvery,sockfd,seconds);
 
     while (1)
     {

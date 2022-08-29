@@ -95,8 +95,15 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
 
     //TO DO :: 非阻塞
 
+    //是客户端的连接数据
+    if (strcmp(msg.data(),"OK") == 0)
+    {
+        return;
+    }
+
     // 向CMDclient发送
     printf("收到客户端的数据：%s\n",msg.data());
+
     // char bufTemp[4096];
     // memcpy(bufTemp, msg, sizeof(bufTemp));
     int tmp = send(CMDcfd, msg.data(), msg.size(),0);
