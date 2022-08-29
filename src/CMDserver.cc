@@ -1,7 +1,7 @@
 #include "CMDserver.h"
 
 CMDserver ::CMDserver(EventLoop *loop,
-                      const InetAddress &listenAddr, int numThreads, int sfd)
+                      const InetAddress &listenAddr, int numThreads,int idleSeconds, int sfd)
     : server_(loop, listenAddr, "CMDserver"),
       loop_(loop),
       numThreads_(numThreads),
@@ -15,6 +15,14 @@ CMDserver ::CMDserver(EventLoop *loop,
     //接收客户端的数据
     server_.setMessageCallback(
         bind(&CMDserver::onMessage, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+
+
+
+    //定时断开无响应客户端的连接
+    //time wheeling
+    connectionBuckets_.resize(idleSeconds);
+    loop->runEvery(1.0,std::bind(&CMDserver::onTimer,this));
+
 
     //设置IO线程的数量
     server_.setThreadNum(numThreads_);
@@ -52,6 +60,12 @@ void CMDserver ::onConnection(const TcpConnectionPtr &conn)
     {
         printf("新客户端加入\n");
         connections_[nodeCount++] = conn; //新客户端加入
+
+        //time wheeling
+        EntryPtr entry(new Entry(conn));//为新客户端分配Entry
+        connectionBuckets_.back().insert(entry);
+        WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
+        conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
     }
     else
     {
@@ -64,6 +78,17 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
                           Buffer *buf,
                           Timestamp time)
 {
+
+    //time wheeling
+    WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
+    EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
+    if (entry)
+    {
+        connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
+        // dumpConnectionBuckets();
+    }
+
+
     StringPiece msg(buf->retrieveAllAsString());
     // LOG_INFO << conn->name() << " echo " << msg.size() << " bytes at " << time.toString();
     // conn->send(msg);
@@ -82,6 +107,34 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
     else if(tmp == 0){
         close(CMDcfd);
     }
+}
+
+//计时器，前进tail
+void CMDserver::onTimer()
+{
+    connectionBuckets_.push_back(Bucket()); //因为环形队列的大小已经固定，在队尾插入会导致删除
+    dumpConnectionBuckets();
+}
+
+//打印引用计数
+void CMDserver::dumpConnectionBuckets() const
+{
+    int idx = 0;
+    for (WeakConnectionList::const_iterator bucketI = connectionBuckets_.begin();
+         bucketI != connectionBuckets_.end();
+         ++bucketI, ++idx)
+    {
+        const Bucket &bucket = *bucketI;
+        printf("[%d] len = %zd : ", idx, bucket.size());
+        for (const auto &it : bucket)
+        {
+            bool connectionDead = it->weakConn_.expired();
+            printf("%p(%ld)%s, ", get_pointer(it), it.use_count(),
+                   connectionDead ? " DEAD" : "");
+        }
+        puts("");
+    }
+    printf("\n");
 }
 
 //建立进程通信的套接字

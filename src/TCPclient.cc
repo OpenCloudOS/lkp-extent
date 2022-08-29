@@ -34,7 +34,12 @@ int main(int argc, char **argv)
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(7777);
+    
+    int port = 7777;
+    if(argc >= 2){
+        port = stoi(argv[1]);;
+    }
+    servaddr.sin_port = htons(port);
 
 
     //连接
