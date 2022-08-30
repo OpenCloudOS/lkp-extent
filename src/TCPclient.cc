@@ -20,11 +20,18 @@ using namespace std;
 void runEvery(int sockfd,int seconds){
     while(1){
         char buf[LEN] = "OK";
+        // printf("周期性发送\n");
         int tmp = send(sockfd,buf,LEN,0);
+        // printf("周期性发送完成\n");
 
-        if (tmp <= 0)
+        if (tmp < 0)
         {
             perror("wrong");
+            // cout<<"wrong"<<endl;
+        }
+        else if(tmp == 0){
+            cout<<"connect end"<<endl;
+            close(sockfd);
         }
 
         sleep(seconds);
@@ -62,9 +69,9 @@ int main(int argc, char **argv)
     servaddr.sin_port = htons(port);
 
 
-    int seconds = 5;
+    int seconds = 1;
     if(argc >= 3){
-        seconds = stoi(argv[1]);
+        seconds = stoi(argv[2]);
     }
 
 
@@ -79,6 +86,7 @@ int main(int argc, char **argv)
 
 
     thread sendRunEvery(runEvery,sockfd,seconds);
+    sendRunEvery.detach();
 
     while (1)
     {
@@ -104,8 +112,5 @@ int main(int argc, char **argv)
         }
     }
 
-    cout<<"TCP client end"<<endl;
-
-    
     return 0;
 }

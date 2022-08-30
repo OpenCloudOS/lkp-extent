@@ -21,6 +21,7 @@
 #include <boost/any.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include<set>
 
 #include "muduo/base/Logging.h"
 #include "muduo/base/Mutex.h"
@@ -89,26 +90,42 @@ private:
 
     EventLoop *loop_;
 
+    std::set<int> idleNodeID;//存放当前闲置的nodeID
+
 
     //time wheeling
     typedef std::weak_ptr<muduo::net::TcpConnection>WeakTcpConnectionPtr;
+
     //Entry的引用计数变成0时，关闭Entry对应客户端的连接
     struct Entry: public muduo::copyable
     {
         //记录Entry对应的客户端连接，传入的是客户端连接的弱引用
-        Entry(const WeakTcpConnectionPtr&weakConn)
-        :weakConn_(weakConn){
-
+        Entry(const WeakTcpConnectionPtr &weakConn, CMDserver*server,int nodeID)
+            : weakConn_(weakConn),Entry_server(server),Entry_nodeID(nodeID)
+        {
+            // printf("Entry，nodeID:%d\n",Entry_nodeID);
         }
-        
+
         //计数是0时，关闭客户端的连接
         ~Entry(){
+            // printf("~Entry，nodeID:%d\n",Entry_nodeID);
+
             muduo::net::TcpConnectionPtr conn = weakConn_.lock();//weak_ptr没有*功能，只能这样取，得到的是share_ptr类型的指针
             if(conn){
                 conn->shutdown();//引用计数0，关闭连接
             }
+            else{
+                return;
+            }
+
+            // printf("~Entry，shutdown\n");
+            //关闭客户端连接时，产生空闲nodeID
+            Entry_server->idleNodeID.insert(Entry_nodeID);
+            // printf("~Entry，insert\n");
         }
         WeakTcpConnectionPtr weakConn_;//弱指针，不会导致计数增加
+        CMDserver* Entry_server;//存放Entry对应的CMDserver
+        int Entry_nodeID;
     };
 
     typedef std::shared_ptr<Entry> EntryPtr;

@@ -17,7 +17,6 @@ CMDserver ::CMDserver(EventLoop *loop,
         bind(&CMDserver::onMessage, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
 
 
-
     //定时断开无响应客户端的连接
     //time wheeling
     connectionBuckets_.resize(idleSeconds);
@@ -36,6 +35,8 @@ void CMDserver ::start()
     Channel *ListenCMDclient = new Channel(loop_, CMDserverSfd);
     ListenCMDclient->setReadCallback(std::bind(&CMDserver::on_accept_CMD_IPC,this));
     ListenCMDclient->enableReading();
+
+    idleNodeID.clear();
 }
 
 //向客户端发送数据
@@ -58,11 +59,26 @@ void CMDserver ::onConnection(const TcpConnectionPtr &conn)
 
     if (conn->connected())
     {
-        printf("新客户端加入\n");
-        connections_[nodeCount++] = conn; //新客户端加入
+        
+        //没有闲置的nodeID
+        int nodeID = -1;
+        if(idleNodeID.empty()){
+            nodeID = nodeCount++;
+            connections_[nodeID] = conn; //新客户端加入
+
+            printf("新客户端加入，nodeID is:%d\n",nodeID);
+        }
+        //分配最小的闲置nodeID
+        else{
+            nodeID = *idleNodeID.begin();
+            idleNodeID.erase(idleNodeID.begin());
+            connections_[nodeID] = conn; //新客户端加入
+
+            printf("新客户端加入，nodeID is:%d\n",nodeID);
+        }
 
         //time wheeling
-        EntryPtr entry(new Entry(conn));//为新客户端分配Entry
+        EntryPtr entry(new Entry(conn,this,nodeID));//为新客户端分配Entry
         connectionBuckets_.back().insert(entry);
         WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
         conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
@@ -80,12 +96,14 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
 {
 
     //time wheeling
+    // printf("收到客户端\n");
+
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
     EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
     if (entry)
     {
+        // printf("收到客户端的信息，nodeID is:%d\n",entry->Entry_nodeID);
         connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
-        // dumpConnectionBuckets();
     }
 
 
@@ -98,6 +116,7 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
     //是客户端的连接数据
     if (strcmp(msg.data(),"OK") == 0)
     {
+        // printf("收到客户端的OK，nodeID is:%d\n",entry->Entry_nodeID);
         return;
     }
 
@@ -120,8 +139,9 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
 void CMDserver::onTimer()
 {
     connectionBuckets_.push_back(Bucket()); //因为环形队列的大小已经固定，在队尾插入会导致删除
-    dumpConnectionBuckets();
+    // dumpConnectionBuckets();
 }
+
 
 //打印引用计数
 void CMDserver::dumpConnectionBuckets() const
