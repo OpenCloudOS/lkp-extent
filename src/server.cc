@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     buildIPC();
 
     if (argc == 1){
-        printf("主线程启动，请输入：端口号 IO线程的数量 客户端闲置的最长时间\n");
+        printf("主线程启动，请输入：1.端口号 2.IO线程的数量 3.客户端闲置的最长时间 4.向CMDclient写入的超时时间\n");
         return 0;
     }
 
@@ -30,9 +30,16 @@ int main(int argc, char *argv[])
     if(argc > 3){
         idleSeconds = atoi(argv[3]);
     }
+    //向CMDclient写入的超时时间
+    int flushInterval = 3;
+    if(argc > 4){
+        flushInterval = atoi(argv[4]);
+    }
 
     InetAddress serverAddr(port);
-    CMDserver server(&loop, serverAddr, numThreads,idleSeconds,CMDsfd);
+
+    off_t kRollSize = 500 * 1000 * 1000;
+    CMDserver server(&loop, serverAddr, numThreads,idleSeconds,CMDsfd,kRollSize,flushInterval);
 
 
     server.start(); //server_.start() 绝对不能在构造函数里调用，这么做将来会有线程安全的问题

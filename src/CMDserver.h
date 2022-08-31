@@ -35,7 +35,14 @@
 #include "muduo/net/Callbacks.h"
 #include "muduo/net/Channel.h"
 #include "muduo/net/TimerId.h"
+#include "muduo/base/BlockingQueue.h"
+#include "muduo/base/BoundedBlockingQueue.h"
+#include "muduo/base/CountDownLatch.h"
 #include <boost/circular_buffer.hpp>
+#include "muduo/base/Thread.h"
+#include "muduo/base/LogStream.h"
+#include <atomic>
+#include "muduo/base/LogFile.h"
 
 
 using namespace muduo;
@@ -49,7 +56,24 @@ using namespace muduo::net;
 class CMDserver : noncopyable
 {
 public:
-    CMDserver(EventLoop *loop, const InetAddress &listenAddr, int numThreads,int idleSeconds,int CMDserverSfd);
+    CMDserver(EventLoop *loop, 
+    const InetAddress &listenAddr, int numThreads,int idleSeconds,int sfd,
+    off_t rollSize,int flushInterval = 3);
+
+    //logging
+    ~CMDserver()
+    {
+        if (running_)
+        {
+            running_ = false;//不允许后端继续写日志
+            cond_.notify();//避免后端卡在条件变量处
+            thread_.join();//回收后端线程
+        }
+    }
+    //logging
+    void append(const char *logline, int len); //前端向一级缓冲区添加数据，操作一级缓冲区之前必须加锁
+    void threadFunc();//后端操作二级，向CMDcleint发送
+
 
     void start();
 
@@ -73,8 +97,8 @@ private:
 
     //接收客户端的数据，发送给CMDclient
     void onMessage(const TcpConnectionPtr &conn,
-                              Buffer *buf,
-                              Timestamp time);
+                          Buffer *buf,
+                          Timestamp time);
 
     TcpServer server_;
 
@@ -133,6 +157,25 @@ private:
     typedef std::unordered_set<EntryPtr>Bucket;//环形队列的元素
     typedef boost::circular_buffer<Bucket>WeakConnectionList;//环形队列
     WeakConnectionList connectionBuckets_;//环形队列
+
+
+    //logging
+    // void threadFunc(); //后端线程，把二级缓冲区写入日志文件
+    typedef muduo::detail::FixedBuffer<muduo::detail::kLargeBuffer> Buffer_log;//缓冲区
+    typedef std::vector<std::unique_ptr<Buffer_log>> BufferVector;//缓冲列表
+    typedef BufferVector::value_type BufferPtr;
+
+    const int flushInterval_; //超时时间，到达时间后没满的缓冲区也必须把数据写入二级缓冲区
+    std::atomic<bool> running_;//保证服务器停止时，后端线程一定停止
+    const string basename_;//输出文件的名称
+    const off_t rollSize_;//日志长度，过长需要roll
+    muduo::Thread thread_;//后端线程
+    muduo::CountDownLatch latch_; //确保后端线程启动之后，服务器才开始运行前端线程
+    muduo::MutexLock mutex_;
+    muduo::Condition cond_ GUARDED_BY(mutex_);//条件变量，触发后端线程开始写日志
+    BufferPtr currentBuffer_ GUARDED_BY(mutex_); //一级当前缓冲区
+    BufferPtr nextBuffer_ GUARDED_BY(mutex_);    //一级预备缓冲区
+    BufferVector buffers_ GUARDED_BY(mutex_);    //二级缓冲区列表，后端和buffersToWrite交换后，操作buffersToWrite写日志，避免长时间占用buffers_阻塞前端
 };
 
 //和命令行通信的套接字 server
