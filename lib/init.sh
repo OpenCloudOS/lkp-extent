@@ -14,15 +14,6 @@ code_init() {
     
 }
 
-# muduo_init() {
-#     local dir
-
-#     dir=$SRC_PATH
-#     [ ! -d $dir/muduo ] && {
-#         cd $dir && git clone $MUDUO_URL 
-#     }
-# }
-
 overlay_init(){
     mkdir -p $FSWORKDIR
     mkdir -p $LKP_DIR
@@ -48,9 +39,7 @@ fs_init(){
         code_init
     }
 
-    # [ ! -d $SRC_PATH/muduo ] && {
-    #     muduo_init
-    # }
+
 
     for mountpoint in $(cat /proc/mounts | awk '{print $2}');do
         fstype=$(cat /proc/mounts | grep $mountpoint | awk '{print $1}')

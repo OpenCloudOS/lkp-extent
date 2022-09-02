@@ -10,7 +10,7 @@ int CMDcfd;
 
 int main(int argc, char *argv[])
 {
-    //建立进程通信的套接字
+    //建立本地进程通信的套接字
     buildIPC();
 
     if (argc == 1){
