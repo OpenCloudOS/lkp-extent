@@ -252,9 +252,7 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
         connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
     }
 
-    StringPiece msg(buf->retrieveAllAsString());
-    // LOG_INFO << conn->name() << " echo " << msg.size() << " bytes at " << time.toString();
-    // conn->send(msg);
+    muduo::StringPiece msg(buf->retrieveAllAsString());
 
     //TO DO :: 非阻塞
 
@@ -269,16 +267,6 @@ void CMDserver::onMessage(const TcpConnectionPtr &conn,
     // 向CMDclient发送
     printf("收到客户端的数据：%s\n", msg.data());
     append(msg.data(),msg.size());
-
-    // int tmp = send(CMDcfd, msg.data(), msg.size(), 0);
-    // if (tmp < 0)
-    // {
-    //     perror("发送给CMDclient 失败\n");
-    // }
-    // else if (tmp == 0)
-    // {
-    //     close(CMDcfd);
-    // }
 }
 
 //计时器，前进tail
