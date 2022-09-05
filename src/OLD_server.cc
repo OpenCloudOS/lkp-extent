@@ -1,4 +1,4 @@
-#include "CMDserver.h"
+#include "OLD_CMDserver.h"
 
 //和命令行通信的套接字 server
 int CMDsfd;

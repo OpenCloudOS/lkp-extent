@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     //     sendline[i] = i % 26 +  'a';
     // }
     // sendline[LEN - 1] = '\0';
-    string input = "0";
+    string input = "RUN";
     if(argc > 1){
         input = string(argv[1]);
     }

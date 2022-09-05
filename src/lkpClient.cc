@@ -55,7 +55,6 @@ typedef std::shared_ptr<lkpMessage::File> RecvFilePtr;
 typedef std::shared_ptr<lkpMessage::Command> RecvCommandPtr;
 typedef std::shared_ptr<lkpMessage::HeartBeat> HeartBeatPtr;
 
-google::protobuf::Message* messageToSend;
 
 class lkpClient : boost::noncopyable
 {
@@ -64,9 +63,9 @@ public:
         : loop_(loop),
           client_(loop, serverAddr, "lkpClient"),
           seconds_(seconds),
-          dispatcher_(bind(&lkpClient::onUnknownMsg,this,
+          dispatcher_(bind(&lkpClient::onUnknownMsg, this,
                     boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
-          codec_(bind(&lkpDispatcher::onProtobufMessage ,this,
+          codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                     boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
     {
         //绑定业务回调函数
@@ -86,7 +85,7 @@ public:
             bind(&lkpClient::onConnection, this, boost::placeholders::_1));
         //绑定client的信息接收回调函数到lkpCodec
         client_.setMessageCallback(
-            bind(&lkpCodec::onMessage, this, 
+            bind(&lkpCodec::onMessage, &codec_, 
                 boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
        
         //绑定定时器产生心跳包
@@ -105,6 +104,16 @@ public:
     void disconnect()
     {
         client_.disconnect();
+    }
+
+    void testSend(uint32_t filelen )
+    {
+        lkpMessage::File ResultFile;
+        ResultFile.set_file_type(lkpMessage::File::filetype::File_filetype_RESULT);
+        ResultFile.set_file_len(filelen);
+        ResultFile.set_file_name("A Test File");
+        ResultFile.set_content("just a test from wjz\n\0");
+        Send(ResultFile);
     }
 
 private:
@@ -128,68 +137,67 @@ private:
                    Buffer *buf,
                    Timestamp time)
     {
-        muduo::StringPiece msg(buf->retrieveAllAsString());
-        printf("收到服务器的数据：%s\n", msg.data());
-
-        //TO DO：根据命令内容执行动作
-        const muduo::StringPiece str("abcdedf");
-        Tcpsend(str);
     }
 
     //收到命令的回调函数，server转发给client， client执行
-    void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
-        printf("i have recved a command!\n");
+    void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time)
+    {
+        printf("I have recved a command!\n");
     }
 
     //收到pushack的回调函数，应该开始发testecase的文件内容
-    void onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time){
+    void onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time)
+    {
 
     }
 
     //收到command ACK的回调函数，应该使统计数量++
-    void onCommandACK(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
+    void onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time)
+    {
 
     }
 
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
-    void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time){
-        printf("recv a file msg, file name is %s\n", message->file_name());
+    void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
+    {
+        printf("recv a file msg, file name is %s\n", message->file_name().c_str());
     }
 
     //收到心跳包的回调函数
-    void onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time){
+    void onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time)
+    {
         printf("Error!\n");
     }
 
     //收到未知数据包的回调函数
-    void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time){
-
-}
+    void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time)
+    {
+        printf("Error!\n");
+    }
 
 
     //定期心跳回调函数
     void onTimer()
     {
-        MutexLockGuard lock(mutex_);
-        if (connection_)
+        if (connection_->connected())
         {
-            //TO DO：调用编码函数发送
-            connection_->send("OK");
-            // codec_.send(get_pointer(connection_), message);
+            printf("发送心跳包\n");
+            lkpMessage::HeartBeat heart;
+            heart.set_status(true);
+            Send(heart);
         }
     }
 
     //向服务器发送数据
-    void Tcpsend(const StringPiece &message)
+    void Send(const google::protobuf::Message& messageToSend)
     {
+        printf("111");
         // mutex用来保护connection_这个shared_ptr
         MutexLockGuard lock(mutex_);
-        if (connection_)
+        if (connection_->connected())
         {
-            //TO DO：调用编码函数发送
-            printf("客户端发送的数据：%s\n", message.data());
-            connection_->send(message);
-            // codec_.send(get_pointer(connection_), message);
+            printf("调用codec发送数据\n");
+            codec_.send(connection_, messageToSend);
         }
     }
 
@@ -206,29 +214,25 @@ private:
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1)
+    uint16_t port = 7777;
+    int seconds = 5;
+    string ip = "127.0.0.1";
+
+    if (argc != 3)
     {
         printf("请输入：1.端口号 2.发送OK的间隔\n");
-        return 0;
+        //return 0;
     }
-
-    int port = 7777;
-    if (argc >= 2)
-    {
-        port = std::stoi(argv[1]);
-    }
-
-    int seconds = 1;
-    if (argc >= 3)
-    {
-        seconds = std::stoi(argv[2]);
+    else {
+        ip = argv[1];
+        port = static_cast<uint16_t>(atoi(argv[2]));
+        seconds = atoi(argv[3]);
     }
 
     EventLoop loop;
-    InetAddress serverAddr(argv[1], port);
+    InetAddress serverAddr(ip, port);
 
     lkpClient client(&loop, serverAddr,seconds);
     client.connect();
-
     loop.loop();
 }

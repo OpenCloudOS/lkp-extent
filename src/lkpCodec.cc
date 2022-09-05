@@ -128,6 +128,7 @@ void lkpCodec::onMessage(const TcpConnectionPtr& conn,
                               Buffer* buf,
                               Timestamp receiveTime)
 {
+  printf("Codec 被触发\n");
   while (buf->readableBytes() >= kMinMessageLen + kHeaderLen)
   {
     const int32_t len = buf->peekInt32();

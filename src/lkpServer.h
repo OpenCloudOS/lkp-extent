@@ -84,7 +84,7 @@ public:
 private:
 
     //向客户端发送数据
-    void sendToTcpClient(const StringPiece &message, int nodeID);
+    void SendToClient(const google::protobuf::Message& message, int nodeID);
 
     // IPC 相关函数
     // 建立进程间的连接
@@ -106,7 +106,7 @@ private:
     //收到pushack的回调函数，应该开始发testecase的文件内容
     void onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time);
     //收到command ACK的回调函数，应该使统计数量++
-    void onCommandACK(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time);
+    void onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time);
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time);
     //收到心跳包的回调函数

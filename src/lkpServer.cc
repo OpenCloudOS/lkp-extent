@@ -14,10 +14,10 @@ lkpServer::lkpServer(EventLoop *loop,
       nodeCount(0),
       
       /*lkpCodec & lkpDispatcher*/
-      dispatcher_(bind(&lkpServer::onUnknownMsg, this, 
-                        boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
-      codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_, 
-                        boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
+      dispatcher_(std::bind(&lkpServer::onUnknownMsg, this, 
+                        std::placeholders::_1,std::placeholders::_2, std::placeholders::_3)),
+      codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_, 
+                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
       /* 高速缓冲区使用变量*/
       flushInterval_(flushInterval),
@@ -32,16 +32,16 @@ lkpServer::lkpServer(EventLoop *loop,
 
 {
     //绑定业务回调函数
-    dispatcher_.registerMessageCallback<lkpMessage::Command>(bind(&lkpServer::onCommandMsg, 
-                        this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(bind(&lkpServer::onCommandACK, 
-                        this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::PushACK>(bind(&lkpServer::onPushACK, 
-                        this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::File>(bind(&lkpServer::onFileMsg, 
-                        this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(bind(&lkpServer::onHeartBeat, 
-                        this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));                                                
+    dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg, 
+                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(std::bind(&lkpServer::onCommandACK, 
+                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::PushACK>(std::bind(&lkpServer::onPushACK, 
+                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::File>(std::bind(&lkpServer::onFileMsg, 
+                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(std::bind(&lkpServer::onHeartBeat, 
+                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));                                                
                                                     
     //绑定新连接请求回调函数
     server_.setConnectionCallback(
@@ -49,7 +49,7 @@ lkpServer::lkpServer(EventLoop *loop,
 
     //绑定lkpCodec接收server新消息的回调函数
     server_.setMessageCallback(
-        bind(&lkpCodec::onMessage , this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+        bind(&lkpCodec::onMessage , &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
 
     //定时断开无响应客户端的连接
     connectionBuckets_.resize(idleSeconds);
@@ -84,14 +84,15 @@ void lkpServer ::start()
 }
 
 //向客户端发送数据
-void lkpServer ::sendToTcpClient(const StringPiece &message, int nodeID)
+void lkpServer ::SendToClient(const google::protobuf::Message& message, int nodeID)
 {
     //向nodeID发送数据
-    if (connections_[nodeID])
+    if (connections_.count(nodeID)&&connections_[nodeID]->connected())
     {
-        printf("向客户端发送数据：%s\n", message.data());
-        connections_[nodeID]->send(message);
+        codec_.send(connections_[nodeID], message);
+        printf("Send Successful!\n");
     }
+    else printf("Send error!\n");
 }
 
 //客户端请求建立新的连接
@@ -177,18 +178,27 @@ void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& messa
 }
 
 //收到command ACK的回调函数，应该使统计数量++
-void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
+void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time){
 
 }
 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
 void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time){
-    printf("recv a file msg, file name is %s\n", message->file_name());
+    printf("recv a file msg\n  file name is %s\n  file length is %u\n",
+                message->file_name().c_str(), message->file_len());
 }
 
 //收到心跳包的回调函数
 void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time){
-
+    printf("recv a HeartBeat, status is %d\n", (int)message->status());
+    //time wheeling
+    WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
+    EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
+    if (entry)
+    {
+        // printf("收到客户端的信息，nodeID is:%d\n",entry->Entry_nodeID);
+        connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
+    }
 }
 
 //收到未知数据包的回调函数
@@ -227,7 +237,7 @@ void lkpServer::dumpConnectionBuckets() const
 
 
 //当cmd listen触发时被回调
-void lkpServer ::onAcceptIPC()
+void lkpServer::onAcceptIPC()
 {
     printf("尝试建立进程间通信的连接\n");
     struct sockaddr_in client;
@@ -243,41 +253,34 @@ void lkpServer ::onAcceptIPC()
     CMDcfdEv->enableReading();
 }
 
-//接收CMDclient的数据
+//接收CMDclient的数据; TODO: 最好要大改IPC通信，先凑合着用
 void lkpServer::onCMDmessage(int CMDcfd)
 {
     char recvbuf[LEN];
 
     //TO DO:接收CMD的输入
     int tmp = recv(CMDcfd, recvbuf, LEN, 0);
+    printf("收到命令行发来的消息,%s\n", recvbuf);
     if (tmp < 0)
     {
         perror("error");
-        return;
     }
     else if (tmp == 0)
     {
         printf("CMDclient关闭连接\n");
         close(CMDcfd);
-        return;
     }
 
     //向TCP客户端推送testcase
     //TO DO:每个线程连接一个客户端
-    int nodeID = std::stoi(recvbuf);
-    printf("收到CMDclient的数据 nodeID:%d\n", nodeID);
-
-    if(nodeID >= nodeCount || idleNodeID.count(nodeID)){
-        printf("服务器没有该客户端\n");
-        char*tempch = new char[strlen("服务器没有该客户端") + 1];
-        strcpy(tempch,"服务器没有该客户端");
-        append(tempch,strlen("服务器没有该客户端") + 1);
-        return;
-    }
-
-    //TO DO：TCP server 负责进行发送
-    std::string stemp = "testcase";
-    sendToTcpClient(stemp, nodeID);
+    
+    printf("Receive from CMD: RUN\n");
+    lkpMessage::Command runCommand;
+    runCommand.set_command(lkpMessage::commandID::RUN);
+    runCommand.set_testcase("test");
+    printf("Send a RUN to client\n");
+    SendToClient(runCommand, 0);
+    
 }
 
 
