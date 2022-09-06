@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package lkpMessage;
+
+enum commandID{
+    UPDATE = 0;      //need no parameter
+    RUN = 1;         //optional: docker_num
+    RESULT = 2;      //need no parameter
+    PUSH = 3;        //required: testcase length
+}
+
+// Command inlcudes UPDATE, RUN, RESULT, PUSH
+// CmdClient send Command to Server, Server transfer to Clients
+message Command {
+    commandID command = 1;
+    oneof testscript{
+        string testcase = 2;
+        string testcluster = 3;
+    }
+    uint32 docker_num = 4;
+    uint32 tesetcase_len = 5;
+}
+
+// File include file informations, for transport testcase and result file
+// between Server and Clients
+message File {
+    enum filetype{
+        TESTCASE = 0;    //Server push testcase to client
+        RESULT = 1;      //Server request result, client send to server
+    }
+    filetype file_type = 1;
+    string file_name = 2;
+    uint32 file_len = 3;
+    uint32 patch_num = 4;
+    bytes content = 5;
+}
+
+// Client which received Command should return a CommandACK
+// for Server count whether all nodes run the Command
+message CommandACK {
+    bool status = 1;     
+    commandID command = 2;   //Return for check
+    string ack_message = 3;  //Error message, etc.
+}
+
+// Clinets should send HearBeat to maintain the connection
+message HeartBeat {
+    bool status = 1;
+}
+
+// Only when a Client receive a Command::PUSH return a PushACK
+// and Server should start transport testcase
+message PushACK {
+    bool status = 1;
+    string ack_message = 2;
+}
+
+// When Server collect all nodes CommandACK or Timeout
+// send Return to lkpCommandClient and printf
+message Return {
+    uint32 clinet_num = 1;
+    uint32 client_ok_num = 2;
+    commandID command = 3;
+    message ErrorInfo{
+        uint32 node_id = 1;
+        string error_msg = 2;
+    }
+    repeated ErrorInfo error_info = 4;
+}

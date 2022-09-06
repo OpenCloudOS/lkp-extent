@@ -42,9 +42,9 @@
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
 
-#include "lkpProto.pb.h"
-#include "lkpCodec.h"
-#include "lkpDispatcher.h"
+#include "lib/lkpProto.pb.h"
+#include "lib/lkpCodec.h"
+#include "lib/lkpDispatcher.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -71,14 +71,8 @@ public:
         //绑定业务回调函数
         dispatcher_.registerMessageCallback<lkpMessage::Command>(bind(&lkpClient::onCommandMsg, 
                             this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-        dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(bind(&lkpClient::onCommandACK, 
-                            this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-        dispatcher_.registerMessageCallback<lkpMessage::PushACK>(bind(&lkpClient::onPushACK, 
-                            this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
         dispatcher_.registerMessageCallback<lkpMessage::File>(bind(&lkpClient::onFileMsg, 
                             this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-        dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(bind(&lkpClient::onHeartBeat, 
-                            this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));  
                         
         //绑定新连接请求回调函数
         client_.setConnectionCallback(
@@ -106,16 +100,6 @@ public:
         client_.disconnect();
     }
 
-    void testSend(uint32_t filelen )
-    {
-        lkpMessage::File ResultFile;
-        ResultFile.set_file_type(lkpMessage::File::filetype::File_filetype_RESULT);
-        ResultFile.set_file_len(filelen);
-        ResultFile.set_file_name("A Test File");
-        ResultFile.set_content("just a test from wjz\n\0");
-        Send(ResultFile);
-    }
-
 private:
     // 该函数在IO线程中执行，IO线程与主线程不在同一个线程
     void onConnection(const TcpConnectionPtr &conn)
@@ -132,56 +116,74 @@ private:
         }
     }
 
-    //（弃用）
-    void onMessage(const TcpConnectionPtr &conn,
-                   Buffer *buf,
-                   Timestamp time)
-    {
-    }
-
     //收到命令的回调函数，server转发给client， client执行
     void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time)
-    {
+    {   
+        //需要回复的ACK
         switch(message->command()){
             case lkpMessage::commandID::UPDATE:{
-                //update.sh
+                //To DO:
+                //sh: lkp-ctl update
+                lkpMessage::CommandACK ACK;
+                ACK.set_command(message->command());
+                ACK.set_status(true);
+                SendToServer(ACK);
                 break;
             }    
             case lkpMessage::commandID::RUN:{
+                string testname;
+                lkpMessage::CommandACK ACK;
+                ACK.set_command(message->command());
+                if(message->testscript_case()==lkpMessage::Command::kTestcase)
+                    testname = message->testcase();
+                else if(message->testscript_case()==lkpMessage::Command::kTestcluster)
+                    testname = message->testcluster();
+                else{
+                    ACK.set_status(false);
+                    ACK.set_ack_message("No testcase or testcluster given!");
+                    break;;
+                }
+                if(message->docker_num()){
+                    //To DO:
+                    // sh: lkp-ctl run $testname -c $dockernum
+                }
+                else{
+                    //To DO:
+                    // sh: lkp-ctl run $testname
+                }
+                ACK.set_status(true);
+                SendToServer(ACK);
                 break;
             }
             case lkpMessage::commandID::RESULT:{
+                lkpMessage::CommandACK ACK;
+                ACK.set_command(message->command());
+                //To DO:
+                //send result to Server
+                //sendFile(string filename);
+                ACK.set_status(true);
+                SendToServer(ACK);
                 break;
             }
             case lkpMessage::commandID::PUSH:{
+                lkpMessage::PushACK PACK;
+                //To DO:
+                //bool canRecvFile(uint32 file_len);
+                //bool createFile(string file_name);
+                PACK.set_status(true);
+                SendToServer(PACK);
                 break;
             }
-
         }
-    }
-
-    //收到pushack的回调函数，应该开始发testecase的文件内容
-    void onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time)
-    {
 
     }
 
-    //收到command ACK的回调函数，应该使统计数量++
-    void onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time)
-    {
 
-    }
 
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
     {
         printf("recv a file msg, file name is %s\n", message->file_name().c_str());
-    }
-
-    //收到心跳包的回调函数
-    void onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time)
-    {
-        printf("Error!\n");
     }
 
     //收到未知数据包的回调函数
@@ -194,24 +196,18 @@ private:
     //定期心跳回调函数
     void onTimer()
     {
-        if (connection_->connected())
-        {
-            printf("发送心跳包\n");
-            lkpMessage::HeartBeat heart;
-            heart.set_status(true);
-            Send(heart);
-        }
+        lkpMessage::HeartBeat heart;
+        heart.set_status(true);
+        SendToServer(heart);
     }
 
     //向服务器发送数据
-    void Send(const google::protobuf::Message& messageToSend)
+    void SendToServer(const google::protobuf::Message& messageToSend)
     {
-        printf("111");
         // mutex用来保护connection_这个shared_ptr
         MutexLockGuard lock(mutex_);
         if (connection_->connected())
         {
-            printf("调用codec发送数据\n");
             codec_.send(connection_, messageToSend);
         }
     }
@@ -236,7 +232,6 @@ int main(int argc, char *argv[])
     if (argc != 3)
     {
         printf("请输入：1.端口号 2.发送OK的间隔\n");
-        //return 0;
     }
     else {
         ip = argv[1];

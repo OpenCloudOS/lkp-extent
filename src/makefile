@@ -1,8 +1,8 @@
-ALL:Server Client OLD_CMDclient
+ALL:lkpServer lkpClient lkpCommand
 
-Server:NewServer.cc lkpServer.cc lkpServer.h lkpCodec.cc lkpCodec.h lkpDispatcher.h lkpProto.pb.cc lkpProto.pb.h
+lkpServer:Server.cc lkpServer.cc lkpServer.h lib/lkpCodec.cc lib/lkpCodec.h lib/lkpDispatcher.h lib/lkpProto.pb.cc lib/lkpProto.pb.h
 	-g++ $^ -o ./build/$@ -lmuduo_net -lmuduo_base -lpthread -lmuduo_protorpc -lprotobuf -lz -std=c++11 -g
-Client:lkpClient.cc lkpCodec.cc lkpCodec.h lkpDispatcher.h lkpProto.pb.cc lkpProto.pb.h
+lkpClient:lkpClient.cc lib/lkpCodec.cc lib/lkpCodec.h lib/lkpDispatcher.h lib/lkpProto.pb.cc lib/lkpProto.pb.h
 	-g++ $^ -o ./build/$@ -lmuduo_net -lmuduo_base -lpthread -lmuduo_protorpc -lprotobuf -lz -std=c++11 -g
-%:%.cc
+lkpCommand:lkpCommand.cc lib/lkpCodec.h lib/lkpDispatcher.h lib/lkpProto.pb.cc lib/lkpProto.pb.h
 	-g++ $^ -o ./build/$@ -lmuduo_net -lmuduo_base -lpthread -lmuduo_protorpc -lprotobuf -lz -std=c++11 -g

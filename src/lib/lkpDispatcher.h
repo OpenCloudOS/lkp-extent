@@ -65,7 +65,6 @@ class lkpDispatcher
                          const MessagePtr& message,
                          muduo::Timestamp receiveTime) const
   {
-    printf("Dispatcher 被触发\n");
     CallbackMap::const_iterator it = callbacks_.find(message->GetDescriptor());
     if (it != callbacks_.end())
     {

@@ -44,9 +44,9 @@
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
 
-#include "lkpProto.pb.h"
-#include "lkpCodec.h"
-#include "lkpDispatcher.h"
+#include "lib/lkpProto.pb.h"
+#include "lib/lkpCodec.h"
+#include "lib/lkpDispatcher.h"
 
 using namespace muduo;
 using namespace muduo::net;

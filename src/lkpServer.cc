@@ -86,6 +86,7 @@ void lkpServer ::start()
 //向客户端发送数据
 void lkpServer ::SendToClient(const google::protobuf::Message& message, int nodeID)
 {
+    MutexLockGuard lock(mutex_);
     //向nodeID发送数据
     if (connections_.count(nodeID)&&connections_[nodeID]->connected())
     {
@@ -135,56 +136,29 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
     }
 }
 
-//（弃用）接收客户端的数据，发送给CMDclient
-void lkpServer::onMessage(const TcpConnectionPtr &conn,
-                          Buffer *buf,
-                          Timestamp time)
-{
-    //time wheeling
-    WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
-    EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
-    if (entry)
-    {
-        // printf("收到客户端的信息，nodeID is:%d\n",entry->Entry_nodeID);
-        connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
-    }
-
-    muduo::StringPiece msg(buf->retrieveAllAsString());
-
-    //TO DO :: 非阻塞
-
-    //是客户端的连接数据
-    if (strcmp(msg.data(), "OK") == 0)
-    {
-        // printf("收到客户端的OK，nodeID is:%d\n",entry->Entry_nodeID);
-        return;
-    }
-
-
-    // 向CMDclient发送
-    printf("收到客户端的数据：%s\n", msg.data());
-    append(msg.data(),msg.size());
-}
-
 //收到命令的回调函数，server转发给client， client执行
 void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
-    printf("error: another server!\n");
+    printf("recv a Command from cmd!\n");
+    //TODO
 }
 
 //收到pushack的回调函数，应该开始发testecase的文件内容
 void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time){
-
+    printf("recv a CommandACK, status is %d", message->status());
+    //TODO
 }
 
 //收到command ACK的回调函数，应该使统计数量++
 void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time){
-
+    printf("recv a CommandACK, status is %d", message->status());
+    //TODO
 }
 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
 void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time){
     printf("recv a file msg\n  file name is %s\n  file length is %u\n",
                 message->file_name().c_str(), message->file_len());
+    //TODO
 }
 
 //收到心跳包的回调函数
@@ -202,7 +176,7 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& m
 
 //收到未知数据包的回调函数
 void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time){
-
+    printf("error! shut down the connection\n");
 }
 
 //计时器，前进tail
