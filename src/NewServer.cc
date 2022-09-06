@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     uint16_t port = 7777;
     string ip = "127.0.0.1";
     int numThreads = 1;
-    int idleSeconds = 5;
+    int idleSeconds = 10;
     int flushInterval = 3;
 
     if (argc != 5){
