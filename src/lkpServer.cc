@@ -90,7 +90,6 @@ void lkpServer ::SendToClient(const google::protobuf::Message& message, int node
     if (connections_.count(nodeID)&&connections_[nodeID]->connected())
     {
         codec_.send(connections_[nodeID], message);
-        printf("Send Successful!\n");
     }
     else printf("Send error!\n");
 }

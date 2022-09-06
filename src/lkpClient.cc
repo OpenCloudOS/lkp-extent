@@ -142,7 +142,22 @@ private:
     //收到命令的回调函数，server转发给client， client执行
     void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time)
     {
-        printf("I have recved a command!\n");
+        switch(message->command()){
+            case lkpMessage::commandID::UPDATE:{
+                //update.sh
+                break;
+            }    
+            case lkpMessage::commandID::RUN:{
+                break;
+            }
+            case lkpMessage::commandID::RESULT:{
+                break;
+            }
+            case lkpMessage::commandID::PUSH:{
+                break;
+            }
+
+        }
     }
 
     //收到pushack的回调函数，应该开始发testecase的文件内容
