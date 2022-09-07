@@ -14,12 +14,14 @@ lkpServer::lkpServer(EventLoop *loop,
       nodeCount(0),
       
       /*lkpCodec & lkpDispatcher*/
+      //绑定dispatcher_收到消息后的默认回调函数，这里设置为收到的message类型未知时的回调函数
       dispatcher_(std::bind(&lkpServer::onUnknownMsg, this, 
                         std::placeholders::_1,std::placeholders::_2, std::placeholders::_3)),
+      //服务器收到消息后，解析形成对应的message，用message作为参数执行onProtobufMessage，哈系表已经存放了message类型对应的回调函数CallbackT
       codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_, 
                         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
-      /* 高速缓冲区使用变量*/
+      /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(flushInterval),
       running_(false),
       rollSize_(rollSize),
@@ -31,7 +33,7 @@ lkpServer::lkpServer(EventLoop *loop,
       buffers_()
 
 {
-    //绑定业务回调函数
+    //绑定业务lkpMessage::xxxxx的回调函数，lkpMessage::Command等在.proto文件中
     dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg, 
                         this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(std::bind(&lkpServer::onCommandACK, 
@@ -47,7 +49,7 @@ lkpServer::lkpServer(EventLoop *loop,
     server_.setConnectionCallback(
         bind(&lkpServer::onConnection, this, boost::placeholders::_1));
 
-    //绑定lkpCodec接收server新消息的回调函数
+    //绑定lkpCodec接收server新消息的回调函数，解析后形成正确类型的message
     server_.setMessageCallback(
         bind(&lkpCodec::onMessage , &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
 

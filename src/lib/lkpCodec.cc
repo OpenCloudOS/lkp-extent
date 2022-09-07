@@ -158,6 +158,7 @@ void lkpCodec::onMessage(const TcpConnectionPtr& conn,
   }
 }
 
+//根据typeName，利用protobuf功能生成descriptor，再根据descriptor生成prototype，最后message = prototype->New()形成定义的消息。
 google::protobuf::Message* lkpCodec::createMessage(const std::string& typeName)
 {
   google::protobuf::Message* message = NULL;
@@ -175,6 +176,7 @@ google::protobuf::Message* lkpCodec::createMessage(const std::string& typeName)
   return message;
 }
 
+//根据typeName，利用protobuf功能生成descriptor，再根据descriptor生成prototype，最后message = prototype->New()形成定义的消息。
 MessagePtr lkpCodec::parse(const char* buf, int len, ErrorCode* error)
 {
   MessagePtr message;

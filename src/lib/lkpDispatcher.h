@@ -21,6 +21,7 @@ class Callback : muduo::noncopyable
                          muduo::Timestamp) const = 0;
 };
 
+//每种message对应一个CallbackT，内部包含一个callback_
 template <typename T>
 class CallbackT : public Callback
 {
@@ -61,14 +62,15 @@ class lkpDispatcher
   {
   }
 
+  //得到根据类型生成的message后调用
   void onProtobufMessage(const muduo::net::TcpConnectionPtr& conn,
                          const MessagePtr& message,
                          muduo::Timestamp receiveTime) const
   {
-    CallbackMap::const_iterator it = callbacks_.find(message->GetDescriptor());
+    CallbackMap::const_iterator it = callbacks_.find(message->GetDescriptor());//利用message内的descriptor从哈系表取出正确CallbackT
     if (it != callbacks_.end())
     {
-      it->second->onMessage(conn, message, receiveTime);
+      it->second->onMessage(conn, message, receiveTime);//CallbackT内的onMessage是该类型消息的回调函数
     }
     else
     {
@@ -76,11 +78,12 @@ class lkpDispatcher
     }
   }
 
+  //T例如lkpMessage::Command
   template<typename T>
   void registerMessageCallback(const typename CallbackT<T>::ProtobufMessageTCallback& callback)
   {
     std::shared_ptr<CallbackT<T> > pd(new CallbackT<T>(callback));
-    callbacks_[T::descriptor()] = pd;
+    callbacks_[T::descriptor()] = pd;//从lkpMessage::Command中取出descriptor
   }
 
  private:
