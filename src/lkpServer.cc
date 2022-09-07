@@ -10,7 +10,6 @@ lkpServer::lkpServer(EventLoop *loop,
     : server_(loop, listenAddr, "lkpServer"),
       loop_(loop),
       numThreads_(numThreads),
-      CMDserverSfd(sfd),
       nodeCount(0),
       
       /*lkpCodec & lkpDispatcher*/
@@ -67,15 +66,10 @@ lkpServer::lkpServer(EventLoop *loop,
 }
 
 
-
+//启动服务器
 void lkpServer ::start()
 {
     server_.start();
-
-    //监听CMDclient
-    Channel *ListenCMDclient = new Channel(loop_, CMDserverSfd);
-    ListenCMDclient->setReadCallback(std::bind(&lkpServer::onAcceptIPC, this));
-    ListenCMDclient->enableReading();
 
     idleNodeID.clear();
 
@@ -97,6 +91,14 @@ void lkpServer ::SendToClient(const google::protobuf::Message& message, int node
     else printf("Send error!\n");
 }
 
+//向命令行客户端发送数据
+
+void lkpServer ::SendToCmdClient(const google::protobuf::Message& message){
+    if(CmdConnection_->connected()){
+        codec_.send(CmdConnection_, message);
+    }
+}
+
 //客户端请求建立新的连接
 void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 {
@@ -106,31 +108,45 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 
     if (conn->connected())
     {
-        //没有闲置的nodeID
-        int nodeID = -1;
-        //考虑把下面的逻辑抽象成clientPool类？
-        if (idleNodeID.empty())
-        {
-            nodeID = nodeCount++;
-            connections_[nodeID] = conn; //新客户端加入
-
-            printf("新客户端加入，nodeID is:%d\n", nodeID);
+        //如果是来自本地回环地址的连接
+        if(!conn->peerAddress().toIp().compare("127.0.0.1")){
+            if(!hasCmdConnected_){
+                CmdConnection_ = conn;
+                printf("lkpServer: Has connected to cmdClient!\n");
+            }
+            else{
+                CmdConnection_->shutdown();
+                printf("lkpServer Error: Has connected to a CmdClient!\n");
+            }
         }
-        //分配最小的闲置nodeID
-        else
-        {
-            nodeID = *idleNodeID.begin();
-            idleNodeID.erase(idleNodeID.begin());
-            connections_[nodeID] = conn; //新客户端加入
+        else{
+            //没有闲置的nodeID
+            int nodeID = -1;
+            //考虑把下面的逻辑抽象成clientPool类？
 
-            printf("新客户端加入，nodeID is:%d\n", nodeID);
+            if (idleNodeID.empty())
+            {
+                nodeID = nodeCount++;
+                connections_[nodeID] = conn; //新客户端加入
+
+                printf("新客户端加入，nodeID is:%d\n", nodeID);
+            }
+            //分配最小的闲置nodeID
+            else
+            {
+                nodeID = *idleNodeID.begin();
+                idleNodeID.erase(idleNodeID.begin());
+                connections_[nodeID] = conn; //新客户端加入
+
+                printf("新客户端加入，nodeID is:%d\n", nodeID);
+            }
+
+            //time wheeling
+            EntryPtr entry(new Entry(conn, this, nodeID)); //为新客户端分配Entry
+            connectionBuckets_.back().insert(entry);
+            WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
+            conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
         }
-
-        //time wheeling
-        EntryPtr entry(new Entry(conn, this, nodeID)); //为新客户端分配Entry
-        connectionBuckets_.back().insert(entry);
-        WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
-        conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
     }
     else
     {
@@ -140,8 +156,32 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 
 //收到命令的回调函数，server转发给client， client执行
 void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
-    printf("recv a Command from cmd!\n");
-    //TODO
+    lkpMessage::commandID myCommand = message->command();
+    string myCommandString;
+    lkpEnumToCmds(myCommand, myCommandString);
+    printf("Recv a command: %s\n", myCommandString.c_str());
+    lkpMessage::Return ReturnToSend;
+    ReturnToSend.set_command(myCommand);
+    if(myCommand==lkpMessage::LIST){
+        ReturnToSend.set_clinet_num(nodeCount);
+        ReturnToSend.set_client_ok_num(nodeCount);
+        lkpMessage::Return::NodeInfo* NodeInfoPtr;
+        for(auto it=connections_.begin();it!=connections_.end();++it){
+            NodeInfoPtr = ReturnToSend.add_node_info();
+            NodeInfoPtr->set_node_id(it->first);
+            NodeInfoPtr->set_node_msg(it->second->peerAddress().toIp());
+        }
+        SendToCmdClient(ReturnToSend);
+    }
+    else{
+        if(!message->node_id()){
+        //send to all nodes
+    }
+    else{
+        //send to one node
+    }
+    }
+    
 }
 
 //收到pushack的回调函数，应该开始发testecase的文件内容
@@ -165,7 +205,7 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& mess
 
 //收到心跳包的回调函数
 void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time){
-    printf("recv a HeartBeat, status is %d\n", (int)message->status());
+    //printf("recv a HeartBeat, status is %d\n", (int)message->status());
     //time wheeling
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
     EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
@@ -207,55 +247,6 @@ void lkpServer::dumpConnectionBuckets() const
         puts("");
     }
     printf("\n");
-}
-
-
-
-//当cmd listen触发时被回调
-void lkpServer::onAcceptIPC()
-{
-    printf("尝试建立进程间通信的连接\n");
-    struct sockaddr_in client;
-    socklen_t len = sizeof(client);
-
-    CMDcfd = accept(CMDsfd, (struct sockaddr *)&client, &len);
-
-    printf("IPC建立， CMDcfd：%d\n", CMDcfd);
-
-    //监听CMDcfd传过来的数据
-    Channel *CMDcfdEv = new Channel(loop_, CMDcfd);
-    CMDcfdEv->setReadCallback(std::bind(&lkpServer::onCMDmessage, this, CMDcfd));
-    CMDcfdEv->enableReading();
-}
-
-//接收CMDclient的数据; TODO: 最好要大改IPC通信，先凑合着用
-void lkpServer::onCMDmessage(int CMDcfd)
-{
-    char recvbuf[LEN];
-
-    //TO DO:接收CMD的输入
-    int tmp = recv(CMDcfd, recvbuf, LEN, 0);
-    printf("收到命令行发来的消息,%s\n", recvbuf);
-    if (tmp < 0)
-    {
-        perror("error");
-    }
-    else if (tmp == 0)
-    {
-        printf("CMDclient关闭连接\n");
-        close(CMDcfd);
-    }
-
-    //向TCP客户端推送testcase
-    //TO DO:每个线程连接一个客户端
-    
-    printf("Receive from CMD: RUN\n");
-    lkpMessage::Command runCommand;
-    runCommand.set_command(lkpMessage::commandID::RUN);
-    runCommand.set_testcase("test");
-    printf("Send a RUN to client\n");
-    SendToClient(runCommand, 0);
-    
 }
 
 
@@ -347,17 +338,6 @@ void lkpServer::threadFunc()
         }
 
         //向CMDclient发送
-        for (const auto &buffer : buffersToWrite)
-        {
-            if (buffer->length() != 0)
-            {
-                int tmp = send(CMDcfd, buffer->data(), buffer->length(), 0);
-                if (tmp < 0)
-                {
-                    perror("向CMDclient发送失败\n");
-                }
-            }
-        }
 
         if (buffersToWrite.size() > 2)
         {
@@ -387,36 +367,3 @@ void lkpServer::threadFunc()
 }
 
 
-//建立进程通信的套接字
-int buildIPC()
-{
-    //和命令行通信的套接字 server
-    CMDsfd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (CMDsfd < 0)
-    {
-        perror("socket fail");
-        return 0;
-    }
-    struct sockaddr_un server;
-    server.sun_family = AF_UNIX;
-    strcpy(server.sun_path, CMDIPC);
-    unlink(CMDIPC);
-    int ret = bind(CMDsfd, (struct sockaddr *)&server, sizeof(server));
-    if (ret < 0)
-    {
-        perror("bind fail");
-        close(CMDsfd);
-        unlink(CMDIPC);
-        return 0;
-    }
-    ret = listen(CMDsfd, 300);
-    if (ret < 0)
-    {
-        perror("listen CMDsfd fail");
-        close(CMDsfd);
-        unlink(CMDIPC);
-        return 0;
-    }
-    printf("lkpServer sfd 建立成功");
-    return 0;
-}

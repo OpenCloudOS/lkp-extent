@@ -1,11 +1,5 @@
 #include "lkpServer.h"
 
-//监听本地新连接
-int CMDsfd;
-
-//命令行的套接字
-int CMDcfd;
-
 int main(int argc, char *argv[])
 {
     
@@ -27,13 +21,12 @@ int main(int argc, char *argv[])
     }
 
     //建立本地进程通信的套接字
-    buildIPC();
     EventLoop loop;
 
     InetAddress serverAddr(port);
 
     off_t kRollSize = 500 * 1000 * 1000;
-    lkpServer Server(&loop, serverAddr, numThreads, idleSeconds, CMDsfd, kRollSize, flushInterval);
+    lkpServer Server(&loop, serverAddr, numThreads, idleSeconds, kRollSize, flushInterval);
 
 
     Server.start(); //server_.start() 绝对不能在构造函数里调用，这么做将来会有线程安全的问题

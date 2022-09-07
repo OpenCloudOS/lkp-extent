@@ -7,18 +7,17 @@ enum commandID{
     RUN = 1;         //optional: docker_num
     RESULT = 2;      //need no parameter
     PUSH = 3;        //required: testcase length
+    LIST = 4;        //only when cmdClinet use
 }
 
-// Command inlcudes UPDATE, RUN, RESULT, PUSH
+// Command inlcudes UPDATE, RUN, RESULT, PUSH, LIST
 // CmdClient send Command to Server, Server transfer to Clients
 message Command {
     commandID command = 1;
-    oneof testscript{
-        string testcase = 2;
-        string testcluster = 3;
-    }
-    uint32 docker_num = 4;
-    uint32 tesetcase_len = 5;
+    string testcase = 2;
+    uint32 docker_num = 3;
+    uint32 tesetcase_len = 4;
+    uint32 node_id = 5;
 }
 
 // File include file informations, for transport testcase and result file
@@ -61,9 +60,9 @@ message Return {
     uint32 clinet_num = 1;
     uint32 client_ok_num = 2;
     commandID command = 3;
-    message ErrorInfo{
+    message NodeInfo{
         uint32 node_id = 1;
-        string error_msg = 2;
+        string node_msg = 2;
     }
-    repeated ErrorInfo error_info = 4;
+    repeated NodeInfo node_info = 4;
 }

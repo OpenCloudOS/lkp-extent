@@ -131,18 +131,10 @@ private:
                 break;
             }    
             case lkpMessage::commandID::RUN:{
-                string testname;
+                
                 lkpMessage::CommandACK ACK;
                 ACK.set_command(message->command());
-                if(message->testscript_case()==lkpMessage::Command::kTestcase)
-                    testname = message->testcase();
-                else if(message->testscript_case()==lkpMessage::Command::kTestcluster)
-                    testname = message->testcluster();
-                else{
-                    ACK.set_status(false);
-                    ACK.set_ack_message("No testcase or testcluster given!");
-                    break;;
-                }
+                string testname = message->testcase();
                 if(message->docker_num()){
                     //To DO:
                     // sh: lkp-ctl run $testname -c $dockernum
@@ -227,7 +219,7 @@ int main(int argc, char *argv[])
 {
     uint16_t port = 7777;
     int seconds = 5;
-    string ip = "127.0.0.1";
+    string ip = "114.212.125.145";
 
     if (argc != 3)
     {

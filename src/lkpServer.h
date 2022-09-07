@@ -47,6 +47,7 @@
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
 #include "lib/lkpDispatcher.h"
+#include "lkpHelper.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -85,6 +86,8 @@ private:
 
     //向客户端发送数据
     void SendToClient(const google::protobuf::Message& message, int nodeID);
+    //向命令行客户端发送数据
+    void SendToCmdClient(const google::protobuf::Message& message);
 
     // IPC 相关函数
     // 建立进程间的连接
@@ -124,11 +127,13 @@ private:
     EventLoop *loop_;
 
     int numThreads_;
-    int CMDserverSfd;
 
     lkpDispatcher dispatcher_;
     lkpCodec codec_;
 
+    TcpConnectionPtr CmdConnection_;
+    bool hasCmdConnected_ = false;
+    
     //client pool nodeID -- cfd
     std::unordered_map<int, TcpConnectionPtr> connections_;
     int nodeCount;
@@ -164,6 +169,7 @@ private:
         lkpServer* Entry_server;//存放Entry对应的CMDserver
         int Entry_nodeID;
     };
+
     typedef std::shared_ptr<Entry> EntryPtr;
     typedef std::weak_ptr<Entry> WeakEntryPtr;
     typedef std::unordered_set<EntryPtr> Bucket;//环形队列的元素
@@ -190,10 +196,3 @@ private:
     BufferVector buffers_ GUARDED_BY(mutex_);    //二级缓冲区列表，后端和buffersToWrite交换后，操作buffersToWrite写日志，避免长时间占用buffers_阻塞前端
 };
 
-//和命令行通信的套接字 server
-extern int CMDsfd;
-
-//代表命令行的套接字
-extern int CMDcfd;
-
-int buildIPC();
