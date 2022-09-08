@@ -150,10 +150,9 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     lkpMessage::Return ReturnToSend;//返回给命令行的回复
     ReturnToSend.set_command(myCommand);
 
-    //lkp list
     if (myCommand == lkpMessage::LIST)
     {
-        ReturnToSend.set_client_num(clientPool_.size());//???
+        ReturnToSend.set_client_num(clientPool_.size());
         ReturnToSend.set_client_ok_num(clientPool_.size());
 
         //所有在线客户端的信息
