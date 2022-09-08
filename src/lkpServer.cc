@@ -18,7 +18,7 @@ lkpServer::lkpServer(EventLoop *loop,
       codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
     //push的文件
-    kBufSize_(64 * 1024),
+      kBufSize_(64 * 1024),
 
       /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(flushInterval),
