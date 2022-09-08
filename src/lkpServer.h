@@ -23,6 +23,7 @@
 #include <boost/any.hpp>
 #include <boost/bind.hpp>
 #include <boost/noncopyable.hpp>
+#include <sys/stat.h>
 
 #include "muduo/base/Logging.h"
 #include "muduo/base/Mutex.h"
@@ -43,6 +44,7 @@
 #include "muduo/base/Thread.h"
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
+#include <boost/shared_ptr.hpp>
 
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
@@ -59,6 +61,7 @@ typedef std::shared_ptr<lkpMessage::CommandACK> CommandACKPtr;
 typedef std::shared_ptr<lkpMessage::File> RecvFilePtr;
 typedef std::shared_ptr<lkpMessage::Command> RecvCommandPtr;
 typedef std::shared_ptr<lkpMessage::HeartBeat> HeartBeatPtr;
+typedef boost::shared_ptr<FILE> FilePtr;
 
 class lkpServer : noncopyable
 {
@@ -86,7 +89,7 @@ public:
 private:
 
     //向客户端发送数据
-    void SendToClient(const google::protobuf::Message& message, int nodeID);
+    void SendToClient(const google::protobuf::Message& message, const TcpConnectionPtr& conn);
     //向命令行客户端发送数据
     void SendToCmdClient(const google::protobuf::Message& message);
 
@@ -104,6 +107,8 @@ private:
 
     //取消使用。
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp time);
+
+    void onWriteComplete(const TcpConnectionPtr &conn);
 
     //收到命令的回调函数，server转发给client， client执行
     void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time);
@@ -140,6 +145,9 @@ private:
     //client pool nodeID -- cfd
     class lkpClientPool clientPool_;
 
+    //conn -- fp
+    std::unordered_map<TcpConnectionPtr,FilePtr>fpMap;
+    int kBufSize_;
 
     //time wheeling使用
     typedef std::weak_ptr<muduo::net::TcpConnection>WeakTcpConnectionPtr;

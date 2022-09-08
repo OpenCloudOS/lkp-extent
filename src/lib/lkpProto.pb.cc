@@ -56,8 +56,9 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       "lkpProto.proto");
   GOOGLE_CHECK(file != NULL);
   Command_descriptor_ = file->message_type(0);
-  static const int Command_offsets_[5] = {
+  static const int Command_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, command_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, send_to_all_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, testcase_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, docker_num_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, tesetcase_len_),
@@ -75,11 +76,12 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _is_default_instance_));
   File_descriptor_ = file->message_type(1);
-  static const int File_offsets_[5] = {
+  static const int File_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_name_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_len_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, patch_num_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, patch_len_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_size_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, first_patch_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, content_),
   };
   File_reflection_ =
@@ -233,25 +235,27 @@ void protobuf_AddDesc_lkpProto_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\016lkpProto.proto\022\nlkpMessage\"\177\n\007Command\022"
-    "&\n\007command\030\001 \001(\0162\025.lkpMessage.commandID\022"
-    "\020\n\010testcase\030\002 \001(\t\022\022\n\ndocker_num\030\003 \001(\r\022\025\n"
-    "\rtesetcase_len\030\004 \001(\r\022\017\n\007node_id\030\005 \001(\r\"\243\001"
-    "\n\004File\022,\n\tfile_type\030\001 \001(\0162\031.lkpMessage.F"
-    "ile.filetype\022\021\n\tfile_name\030\002 \001(\t\022\020\n\010file_"
-    "len\030\003 \001(\r\022\021\n\tpatch_num\030\004 \001(\r\022\017\n\007content\030"
-    "\005 \001(\014\"$\n\010filetype\022\014\n\010TESTCASE\020\000\022\n\n\006RESUL"
-    "T\020\001\"Y\n\nCommandACK\022\016\n\006status\030\001 \001(\010\022&\n\007com"
-    "mand\030\002 \001(\0162\025.lkpMessage.commandID\022\023\n\013ack"
-    "_message\030\003 \001(\t\"\033\n\tHeartBeat\022\016\n\006status\030\001 "
-    "\001(\010\".\n\007PushACK\022\016\n\006status\030\001 \001(\010\022\023\n\013ack_me"
-    "ssage\030\002 \001(\t\"\272\001\n\006Return\022\022\n\nclient_num\030\001 \001"
-    "(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&\n\007command\030\003 \001"
-    "(\0162\025.lkpMessage.commandID\022.\n\tnode_info\030\004"
-    " \003(\0132\033.lkpMessage.Return.NodeInfo\032-\n\010Nod"
-    "eInfo\022\017\n\007node_id\030\001 \001(\r\022\020\n\010node_msg\030\002 \001(\t"
-    "*@\n\tcommandID\022\n\n\006UPDATE\020\000\022\007\n\003RUN\020\001\022\n\n\006RE"
-    "SULT\020\002\022\010\n\004PUSH\020\003\022\010\n\004LIST\020\004b\006proto3", 754);
+    "\n\016lkpProto.proto\022\nlkpMessage\"\224\001\n\007Command"
+    "\022&\n\007command\030\001 \001(\0162\025.lkpMessage.commandID"
+    "\022\023\n\013send_to_all\030\002 \001(\010\022\020\n\010testcase\030\003 \001(\t\022"
+    "\022\n\ndocker_num\030\004 \001(\r\022\025\n\rtesetcase_len\030\005 \001"
+    "(\r\022\017\n\007node_id\030\006 \001(\r\"\302\001\n\004File\022,\n\tfile_typ"
+    "e\030\001 \001(\0162\031.lkpMessage.File.filetype\022\021\n\tfi"
+    "le_name\030\002 \001(\t\022\021\n\tpatch_len\030\003 \001(\r\022\021\n\tfile"
+    "_size\030\004 \001(\r\022\023\n\013first_patch\030\005 \001(\010\022\017\n\007cont"
+    "ent\030\006 \001(\014\"-\n\010filetype\022\014\n\010TESTCASE\020\000\022\n\n\006R"
+    "ESULT\020\001\022\007\n\003END\020\002\"Y\n\nCommandACK\022\016\n\006status"
+    "\030\001 \001(\010\022&\n\007command\030\002 \001(\0162\025.lkpMessage.com"
+    "mandID\022\023\n\013ack_message\030\003 \001(\t\"\033\n\tHeartBeat"
+    "\022\016\n\006status\030\001 \001(\010\".\n\007PushACK\022\016\n\006status\030\001 "
+    "\001(\010\022\023\n\013ack_message\030\002 \001(\t\"\272\001\n\006Return\022\022\n\nc"
+    "lient_num\030\001 \001(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&"
+    "\n\007command\030\003 \001(\0162\025.lkpMessage.commandID\022."
+    "\n\tnode_info\030\004 \003(\0132\033.lkpMessage.Return.No"
+    "deInfo\032-\n\010NodeInfo\022\017\n\007node_id\030\001 \001(\r\022\020\n\010n"
+    "ode_msg\030\002 \001(\t*@\n\tcommandID\022\n\n\006UPDATE\020\000\022\007"
+    "\n\003RUN\020\001\022\n\n\006RESULT\020\002\022\010\n\004PUSH\020\003\022\010\n\004LIST\020\004b"
+    "\006proto3", 807);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lkpProto.proto", &protobuf_RegisterTypes);
   Command::default_instance_ = new Command();
@@ -299,6 +303,7 @@ bool commandID_IsValid(int value) {
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Command::kCommandFieldNumber;
+const int Command::kSendToAllFieldNumber;
 const int Command::kTestcaseFieldNumber;
 const int Command::kDockerNumFieldNumber;
 const int Command::kTesetcaseLenFieldNumber;
@@ -328,6 +333,7 @@ void Command::SharedCtor() {
   ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   command_ = 0;
+  send_to_all_ = false;
   testcase_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   docker_num_ = 0u;
   tesetcase_len_ = 0u;
@@ -388,7 +394,8 @@ void Command::Clear() {
            ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
 } while (0)
 
-  ZR_(command_, node_id_);
+  ZR_(command_, send_to_all_);
+  ZR_(docker_num_, node_id_);
   testcase_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 
 #undef ZR_HELPER_
@@ -417,13 +424,28 @@ bool Command::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(18)) goto parse_testcase;
+        if (input->ExpectTag(16)) goto parse_send_to_all;
         break;
       }
 
-      // optional string testcase = 2;
+      // optional bool send_to_all = 2;
       case 2: {
-        if (tag == 18) {
+        if (tag == 16) {
+         parse_send_to_all:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &send_to_all_)));
+
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_testcase;
+        break;
+      }
+
+      // optional string testcase = 3;
+      case 3: {
+        if (tag == 26) {
          parse_testcase:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_testcase()));
@@ -434,13 +456,13 @@ bool Command::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(24)) goto parse_docker_num;
+        if (input->ExpectTag(32)) goto parse_docker_num;
         break;
       }
 
-      // optional uint32 docker_num = 3;
-      case 3: {
-        if (tag == 24) {
+      // optional uint32 docker_num = 4;
+      case 4: {
+        if (tag == 32) {
          parse_docker_num:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -449,13 +471,13 @@ bool Command::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(32)) goto parse_tesetcase_len;
+        if (input->ExpectTag(40)) goto parse_tesetcase_len;
         break;
       }
 
-      // optional uint32 tesetcase_len = 4;
-      case 4: {
-        if (tag == 32) {
+      // optional uint32 tesetcase_len = 5;
+      case 5: {
+        if (tag == 40) {
          parse_tesetcase_len:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -464,13 +486,13 @@ bool Command::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(40)) goto parse_node_id;
+        if (input->ExpectTag(48)) goto parse_node_id;
         break;
       }
 
-      // optional uint32 node_id = 5;
-      case 5: {
-        if (tag == 40) {
+      // optional uint32 node_id = 6;
+      case 6: {
+        if (tag == 48) {
          parse_node_id:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -513,29 +535,34 @@ void Command::SerializeWithCachedSizes(
       1, this->command(), output);
   }
 
-  // optional string testcase = 2;
+  // optional bool send_to_all = 2;
+  if (this->send_to_all() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(2, this->send_to_all(), output);
+  }
+
+  // optional string testcase = 3;
   if (this->testcase().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->testcase().data(), this->testcase().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "lkpMessage.Command.testcase");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      2, this->testcase(), output);
+      3, this->testcase(), output);
   }
 
-  // optional uint32 docker_num = 3;
+  // optional uint32 docker_num = 4;
   if (this->docker_num() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->docker_num(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->docker_num(), output);
   }
 
-  // optional uint32 tesetcase_len = 4;
+  // optional uint32 tesetcase_len = 5;
   if (this->tesetcase_len() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->tesetcase_len(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->tesetcase_len(), output);
   }
 
-  // optional uint32 node_id = 5;
+  // optional uint32 node_id = 6;
   if (this->node_id() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->node_id(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(6, this->node_id(), output);
   }
 
   // @@protoc_insertion_point(serialize_end:lkpMessage.Command)
@@ -550,7 +577,12 @@ void Command::SerializeWithCachedSizes(
       1, this->command(), target);
   }
 
-  // optional string testcase = 2;
+  // optional bool send_to_all = 2;
+  if (this->send_to_all() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(2, this->send_to_all(), target);
+  }
+
+  // optional string testcase = 3;
   if (this->testcase().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->testcase().data(), this->testcase().length(),
@@ -558,22 +590,22 @@ void Command::SerializeWithCachedSizes(
       "lkpMessage.Command.testcase");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->testcase(), target);
+        3, this->testcase(), target);
   }
 
-  // optional uint32 docker_num = 3;
+  // optional uint32 docker_num = 4;
   if (this->docker_num() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->docker_num(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->docker_num(), target);
   }
 
-  // optional uint32 tesetcase_len = 4;
+  // optional uint32 tesetcase_len = 5;
   if (this->tesetcase_len() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->tesetcase_len(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->tesetcase_len(), target);
   }
 
-  // optional uint32 node_id = 5;
+  // optional uint32 node_id = 6;
   if (this->node_id() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->node_id(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(6, this->node_id(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:lkpMessage.Command)
@@ -590,28 +622,33 @@ int Command::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->command());
   }
 
-  // optional string testcase = 2;
+  // optional bool send_to_all = 2;
+  if (this->send_to_all() != 0) {
+    total_size += 1 + 1;
+  }
+
+  // optional string testcase = 3;
   if (this->testcase().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->testcase());
   }
 
-  // optional uint32 docker_num = 3;
+  // optional uint32 docker_num = 4;
   if (this->docker_num() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
         this->docker_num());
   }
 
-  // optional uint32 tesetcase_len = 4;
+  // optional uint32 tesetcase_len = 5;
   if (this->tesetcase_len() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
         this->tesetcase_len());
   }
 
-  // optional uint32 node_id = 5;
+  // optional uint32 node_id = 6;
   if (this->node_id() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
@@ -648,6 +685,9 @@ void Command::MergeFrom(const Command& from) {
   }
   if (from.command() != 0) {
     set_command(from.command());
+  }
+  if (from.send_to_all() != 0) {
+    set_send_to_all(from.send_to_all());
   }
   if (from.testcase().size() > 0) {
 
@@ -689,6 +729,7 @@ void Command::Swap(Command* other) {
 }
 void Command::InternalSwap(Command* other) {
   std::swap(command_, other->command_);
+  std::swap(send_to_all_, other->send_to_all_);
   testcase_.Swap(&other->testcase_);
   std::swap(docker_num_, other->docker_num_);
   std::swap(tesetcase_len_, other->tesetcase_len_);
@@ -722,7 +763,21 @@ void Command::clear_command() {
   // @@protoc_insertion_point(field_set:lkpMessage.Command.command)
 }
 
-// optional string testcase = 2;
+// optional bool send_to_all = 2;
+void Command::clear_send_to_all() {
+  send_to_all_ = false;
+}
+ bool Command::send_to_all() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.Command.send_to_all)
+  return send_to_all_;
+}
+ void Command::set_send_to_all(bool value) {
+  
+  send_to_all_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.Command.send_to_all)
+}
+
+// optional string testcase = 3;
 void Command::clear_testcase() {
   testcase_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -766,7 +821,7 @@ void Command::clear_testcase() {
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.Command.testcase)
 }
 
-// optional uint32 docker_num = 3;
+// optional uint32 docker_num = 4;
 void Command::clear_docker_num() {
   docker_num_ = 0u;
 }
@@ -780,7 +835,7 @@ void Command::clear_docker_num() {
   // @@protoc_insertion_point(field_set:lkpMessage.Command.docker_num)
 }
 
-// optional uint32 tesetcase_len = 4;
+// optional uint32 tesetcase_len = 5;
 void Command::clear_tesetcase_len() {
   tesetcase_len_ = 0u;
 }
@@ -794,7 +849,7 @@ void Command::clear_tesetcase_len() {
   // @@protoc_insertion_point(field_set:lkpMessage.Command.tesetcase_len)
 }
 
-// optional uint32 node_id = 5;
+// optional uint32 node_id = 6;
 void Command::clear_node_id() {
   node_id_ = 0u;
 }
@@ -820,6 +875,7 @@ bool File_filetype_IsValid(int value) {
   switch(value) {
     case 0:
     case 1:
+    case 2:
       return true;
     default:
       return false;
@@ -829,6 +885,7 @@ bool File_filetype_IsValid(int value) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const File_filetype File::TESTCASE;
 const File_filetype File::RESULT;
+const File_filetype File::END;
 const File_filetype File::filetype_MIN;
 const File_filetype File::filetype_MAX;
 const int File::filetype_ARRAYSIZE;
@@ -836,8 +893,9 @@ const int File::filetype_ARRAYSIZE;
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int File::kFileTypeFieldNumber;
 const int File::kFileNameFieldNumber;
-const int File::kFileLenFieldNumber;
-const int File::kPatchNumFieldNumber;
+const int File::kPatchLenFieldNumber;
+const int File::kFileSizeFieldNumber;
+const int File::kFirstPatchFieldNumber;
 const int File::kContentFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -865,8 +923,9 @@ void File::SharedCtor() {
   _cached_size_ = 0;
   file_type_ = 0;
   file_name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  file_len_ = 0u;
-  patch_num_ = 0u;
+  patch_len_ = 0u;
+  file_size_ = 0u;
+  first_patch_ = false;
   content_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -925,9 +984,8 @@ void File::Clear() {
            ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
 } while (0)
 
-  ZR_(file_type_, file_len_);
+  ZR_(file_type_, first_patch_);
   file_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  patch_num_ = 0u;
   content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 
 #undef ZR_HELPER_
@@ -973,43 +1031,58 @@ bool File::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(24)) goto parse_file_len;
+        if (input->ExpectTag(24)) goto parse_patch_len;
         break;
       }
 
-      // optional uint32 file_len = 3;
+      // optional uint32 patch_len = 3;
       case 3: {
         if (tag == 24) {
-         parse_file_len:
+         parse_patch_len:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &file_len_)));
+                 input, &patch_len_)));
 
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(32)) goto parse_patch_num;
+        if (input->ExpectTag(32)) goto parse_file_size;
         break;
       }
 
-      // optional uint32 patch_num = 4;
+      // optional uint32 file_size = 4;
       case 4: {
         if (tag == 32) {
-         parse_patch_num:
+         parse_file_size:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &patch_num_)));
+                 input, &file_size_)));
 
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(42)) goto parse_content;
+        if (input->ExpectTag(40)) goto parse_first_patch;
         break;
       }
 
-      // optional bytes content = 5;
+      // optional bool first_patch = 5;
       case 5: {
-        if (tag == 42) {
+        if (tag == 40) {
+         parse_first_patch:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &first_patch_)));
+
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(50)) goto parse_content;
+        break;
+      }
+
+      // optional bytes content = 6;
+      case 6: {
+        if (tag == 50) {
          parse_content:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_content()));
@@ -1060,20 +1133,25 @@ void File::SerializeWithCachedSizes(
       2, this->file_name(), output);
   }
 
-  // optional uint32 file_len = 3;
-  if (this->file_len() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->file_len(), output);
+  // optional uint32 patch_len = 3;
+  if (this->patch_len() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->patch_len(), output);
   }
 
-  // optional uint32 patch_num = 4;
-  if (this->patch_num() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->patch_num(), output);
+  // optional uint32 file_size = 4;
+  if (this->file_size() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->file_size(), output);
   }
 
-  // optional bytes content = 5;
+  // optional bool first_patch = 5;
+  if (this->first_patch() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(5, this->first_patch(), output);
+  }
+
+  // optional bytes content = 6;
   if (this->content().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      5, this->content(), output);
+      6, this->content(), output);
   }
 
   // @@protoc_insertion_point(serialize_end:lkpMessage.File)
@@ -1099,21 +1177,26 @@ void File::SerializeWithCachedSizes(
         2, this->file_name(), target);
   }
 
-  // optional uint32 file_len = 3;
-  if (this->file_len() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->file_len(), target);
+  // optional uint32 patch_len = 3;
+  if (this->patch_len() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->patch_len(), target);
   }
 
-  // optional uint32 patch_num = 4;
-  if (this->patch_num() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->patch_num(), target);
+  // optional uint32 file_size = 4;
+  if (this->file_size() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->file_size(), target);
   }
 
-  // optional bytes content = 5;
+  // optional bool first_patch = 5;
+  if (this->first_patch() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(5, this->first_patch(), target);
+  }
+
+  // optional bytes content = 6;
   if (this->content().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        5, this->content(), target);
+        6, this->content(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:lkpMessage.File)
@@ -1137,21 +1220,26 @@ int File::ByteSize() const {
         this->file_name());
   }
 
-  // optional uint32 file_len = 3;
-  if (this->file_len() != 0) {
+  // optional uint32 patch_len = 3;
+  if (this->patch_len() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->file_len());
+        this->patch_len());
   }
 
-  // optional uint32 patch_num = 4;
-  if (this->patch_num() != 0) {
+  // optional uint32 file_size = 4;
+  if (this->file_size() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->patch_num());
+        this->file_size());
   }
 
-  // optional bytes content = 5;
+  // optional bool first_patch = 5;
+  if (this->first_patch() != 0) {
+    total_size += 1 + 1;
+  }
+
+  // optional bytes content = 6;
   if (this->content().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
@@ -1193,11 +1281,14 @@ void File::MergeFrom(const File& from) {
 
     file_name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.file_name_);
   }
-  if (from.file_len() != 0) {
-    set_file_len(from.file_len());
+  if (from.patch_len() != 0) {
+    set_patch_len(from.patch_len());
   }
-  if (from.patch_num() != 0) {
-    set_patch_num(from.patch_num());
+  if (from.file_size() != 0) {
+    set_file_size(from.file_size());
+  }
+  if (from.first_patch() != 0) {
+    set_first_patch(from.first_patch());
   }
   if (from.content().size() > 0) {
 
@@ -1231,8 +1322,9 @@ void File::Swap(File* other) {
 void File::InternalSwap(File* other) {
   std::swap(file_type_, other->file_type_);
   file_name_.Swap(&other->file_name_);
-  std::swap(file_len_, other->file_len_);
-  std::swap(patch_num_, other->patch_num_);
+  std::swap(patch_len_, other->patch_len_);
+  std::swap(file_size_, other->file_size_);
+  std::swap(first_patch_, other->first_patch_);
   content_.Swap(&other->content_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
@@ -1307,35 +1399,49 @@ void File::clear_file_name() {
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.File.file_name)
 }
 
-// optional uint32 file_len = 3;
-void File::clear_file_len() {
-  file_len_ = 0u;
+// optional uint32 patch_len = 3;
+void File::clear_patch_len() {
+  patch_len_ = 0u;
 }
- ::google::protobuf::uint32 File::file_len() const {
-  // @@protoc_insertion_point(field_get:lkpMessage.File.file_len)
-  return file_len_;
+ ::google::protobuf::uint32 File::patch_len() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.File.patch_len)
+  return patch_len_;
 }
- void File::set_file_len(::google::protobuf::uint32 value) {
+ void File::set_patch_len(::google::protobuf::uint32 value) {
   
-  file_len_ = value;
-  // @@protoc_insertion_point(field_set:lkpMessage.File.file_len)
+  patch_len_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.File.patch_len)
 }
 
-// optional uint32 patch_num = 4;
-void File::clear_patch_num() {
-  patch_num_ = 0u;
+// optional uint32 file_size = 4;
+void File::clear_file_size() {
+  file_size_ = 0u;
 }
- ::google::protobuf::uint32 File::patch_num() const {
-  // @@protoc_insertion_point(field_get:lkpMessage.File.patch_num)
-  return patch_num_;
+ ::google::protobuf::uint32 File::file_size() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.File.file_size)
+  return file_size_;
 }
- void File::set_patch_num(::google::protobuf::uint32 value) {
+ void File::set_file_size(::google::protobuf::uint32 value) {
   
-  patch_num_ = value;
-  // @@protoc_insertion_point(field_set:lkpMessage.File.patch_num)
+  file_size_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.File.file_size)
 }
 
-// optional bytes content = 5;
+// optional bool first_patch = 5;
+void File::clear_first_patch() {
+  first_patch_ = false;
+}
+ bool File::first_patch() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.File.first_patch)
+  return first_patch_;
+}
+ void File::set_first_patch(bool value) {
+  
+  first_patch_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.File.first_patch)
+}
+
+// optional bytes content = 6;
 void File::clear_content() {
   content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }

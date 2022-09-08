@@ -41,6 +41,7 @@
 #include <boost/circular_buffer.hpp>
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
+#include <sys/stat.h>
 
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
@@ -175,7 +176,31 @@ private:
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
     {
-        printf("recv a file msg, file name is %s\n", message->file_name().c_str());
+        //文件发送结束
+        if (message->file_type() == lkpMessage::File::END)
+        {
+            //获取文件的大小
+            struct stat statbuf;
+            stat(fileName_.c_str(), &statbuf);
+            int recvSize = statbuf.st_size;
+            //检查文件是否完整
+            if(recvSize != fileSize_){
+                printf("file is not complete!\n");
+            }
+
+            return;
+        }
+        //第一次接收
+        else if (message->first_patch())
+        {
+            fileName_ = message->file_name();
+            printf("fileName_:%s\n",fileName_.c_str());
+            fileSize_ = message->file_size();
+            fp_ = ::fopen(fileName_.c_str(), "we");
+            assert(fp_);
+        }
+        //每次接收的都输出
+        fwrite(message->content().c_str(), 1, message->patch_len(), fp_);
     }
 
     //收到未知数据包的回调函数
@@ -213,6 +238,10 @@ private:
     MutexLock mutex_;
     TcpConnectionPtr connection_;
     int seconds_;
+
+    int fileSize_;//文件大小
+    string fileName_;//文件名称
+    FILE *fp_;
 };
 
 int main(int argc, char *argv[])
