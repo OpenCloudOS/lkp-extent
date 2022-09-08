@@ -14,10 +14,11 @@ enum commandID{
 // CmdClient send Command to Server, Server transfer to Clients
 message Command {
     commandID command = 1;
-    string testcase = 2;
-    uint32 docker_num = 3;
-    uint32 tesetcase_len = 4;
-    uint32 node_id = 5;
+    bool send_to_all = 2;
+    string testcase = 3;
+    uint32 docker_num = 4;
+    uint32 tesetcase_len = 5;
+    uint32 node_id = 6;
 }
 
 // File include file informations, for transport testcase and result file
@@ -26,12 +27,14 @@ message File {
     enum filetype{
         TESTCASE = 0;    //Server push testcase to client
         RESULT = 1;      //Server request result, client send to server
+        END = 2;
     }
     filetype file_type = 1;
     string file_name = 2;
-    uint32 file_len = 3;
-    uint32 patch_num = 4;
-    bytes content = 5;
+    uint32 patch_len = 3;
+    uint32 file_size = 4;
+    bool first_patch = 5;
+    bytes content = 6;
 }
 
 // Client which received Command should return a CommandACK

@@ -209,10 +209,16 @@ int main(int argc, char *argv[])
         //Testcase
         commandToSend.set_testcase(string(argv[2]));
 
-        //NodeID
+
+        //NodeID，-1表示发送给全体
         int nodeID = atoi(argv[3]);
-        if (nodeID >= -1){
+        if (nodeID >= 0){
             commandToSend.set_node_id(nodeID);
+            commandToSend.set_send_to_all(false);
+        }
+        else{
+            commandToSend.set_node_id(-1);
+            commandToSend.set_send_to_all(true);
         }
             
         //ContainerCnt

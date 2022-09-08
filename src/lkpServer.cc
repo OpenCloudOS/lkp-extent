@@ -17,6 +17,8 @@ lkpServer::lkpServer(EventLoop *loop,
       //服务器收到消息后，解析形成对应的message，用message作为参数执行onProtobufMessage，哈系表已经存放了message类型对应的回调函数CallbackT
       codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+    //push的文件
+    kBufSize_(64 * 1024),
 
       /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(flushInterval),
@@ -50,6 +52,8 @@ lkpServer::lkpServer(EventLoop *loop,
     server_.setMessageCallback(
         bind(&lkpCodec::onMessage, &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
 
+    
+
     //定时断开无响应客户端的连接
     connectionBuckets_.resize(idleSeconds);
     loop->runEvery(1.0, std::bind(&lkpServer::onTimer, this));
@@ -68,6 +72,9 @@ void lkpServer ::start()
 {
     server_.start();
 
+    //push的文件描述符
+    fpMap.clear();
+
     //logging
     running_ = true; //允许后端写日志
     thread_.start(); //启动后端线程threadFunc
@@ -75,11 +82,11 @@ void lkpServer ::start()
 }
 
 //向客户端发送数据
-void lkpServer ::SendToClient(const google::protobuf::Message &message, int nodeID)
+void lkpServer ::SendToClient(const google::protobuf::Message &message, const TcpConnectionPtr& conn)
 {
     // MutexLockGuard lock(mutex_);
     //向nodeID发送数据
-    TcpConnectionPtr conn = clientPool_.getConn(nodeID);
+
 
     if (conn && conn->connected())
     {
@@ -125,13 +132,19 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
         else
         {
             int nodeID = clientPool_.add(conn);
-            printf("onConnection nodeID is:%d\n",nodeID);
+            // printf("onConnection nodeID is:%d\n",nodeID);
 
             //time wheeling
             EntryPtr entry(new Entry(conn, this, nodeID)); //为新客户端分配Entry
             connectionBuckets_.back().insert(entry);
             WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
             conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
+
+
+            // lkpMessage::File messageFile;
+            // messageFile.set_file_name("test onWriteComplete");
+            // conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, boost::placeholders::_1));
+            // SendToClient(messageFile, conn);
         }
     }
     else
@@ -167,7 +180,80 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         //回复给命令行
         SendToCmdClient(ReturnToSend);
     }
-    else
+    //lkp push
+    else if(myCommand == lkpMessage::PUSH){
+        ReturnToSend.set_client_num(clientPool_.size());
+        ReturnToSend.set_client_ok_num(clientPool_.size());
+
+        string fileName = message->testcase();//文件名称
+        //获取文件的大小
+        struct stat statbuf;
+        stat(fileName.c_str(), &statbuf);
+        int fileSize = statbuf.st_size;
+        
+        //单播
+        if(!message->send_to_all()){
+            FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
+            if (!fp)
+            {
+                perror("open file fail!!\n");
+                return;
+            }
+
+            int nodeID = message->node_id();
+            TcpConnectionPtr conn = clientPool_.getConn(nodeID);
+            
+            FilePtr ctx(fp, ::fclose); //多了::fclose参数，表示fp对象的引用计数器变成0时，调用::fclose来销毁fp
+            fpMap[conn] = ctx;
+            char buf[kBufSize_];
+            size_t nread = ::fread(buf, 1, sizeof buf, fp); //读取kBufSize的内容
+
+            conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
+
+            lkpMessage::File fileMessage;
+            fileMessage.set_file_type(lkpMessage::File::TESTCASE);
+            fileMessage.set_file_name(std::to_string(nodeID));
+            fileMessage.set_file_size(fileSize);
+            fileMessage.set_patch_len(nread);
+            fileMessage.set_first_patch(true);
+            fileMessage.set_content(buf);
+
+            SendToClient(fileMessage,conn);
+        }
+        //广播
+        else{
+            //对所有节点作一次单播
+            for(auto it:clientPool_.connections_){
+                FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
+                if (!fp)
+                {
+                    perror("open file fail!!\n");
+                    return;
+                }
+
+                int nodeID = it.first;
+                TcpConnectionPtr conn = it.second;
+
+                FilePtr ctx(fp, ::fclose); //多了::fclose参数，表示fp对象的引用计数器变成0时，调用::fclose来销毁fp
+                fpMap[conn] = ctx;
+                char buf[kBufSize_];
+                size_t nread = ::fread(buf, 1, sizeof buf, fp); //读取kBufSize的内容
+
+                conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
+
+                lkpMessage::File fileMessage;
+                fileMessage.set_file_type(lkpMessage::File::TESTCASE);
+                fileMessage.set_file_name(fileName + "nodeID" + std::to_string(nodeID));
+                fileMessage.set_file_size(fileSize);
+                fileMessage.set_patch_len(nread);
+                fileMessage.set_first_patch(true);
+                fileMessage.set_content(buf);
+
+                SendToClient(fileMessage, conn);
+            }
+        }
+    }
+    else 
     {
         if (!message->node_id())
         {
@@ -177,6 +263,36 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         {
             //send to one node
         }
+    }
+}
+
+void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
+{
+    FilePtr &fp = fpMap[conn];
+
+    char buf[kBufSize_];
+    size_t nread = ::fread(buf, 1, sizeof buf, get_pointer(fp));
+    //续传
+    if (nread > 0)
+    {
+        lkpMessage::File fileMessage;
+        fileMessage.set_file_type(lkpMessage::File::TESTCASE);
+        fileMessage.set_first_patch(false);
+        fileMessage.set_patch_len(nread);
+        fileMessage.set_content(buf);
+
+        SendToClient(fileMessage,conn);
+    }
+    //结束
+    else
+    {
+        //发送结束信号
+        lkpMessage::File fileMessage;
+        fileMessage.set_file_type(lkpMessage::File::END);
+        SendToClient(fileMessage,conn);
+
+        conn->setWriteCompleteCallback(NULL);
+        printf("push testcase to client end!\n");
     }
 }
 
@@ -198,7 +314,7 @@ void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr 
 void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &message, Timestamp time)
 {
     printf("recv a file msg\n  file name is %s\n  file length is %u\n",
-           message->file_name().c_str(), message->file_len());
+           message->file_name().c_str(), message->file_size());
     //TODO
 }
 
