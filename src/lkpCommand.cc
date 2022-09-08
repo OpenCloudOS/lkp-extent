@@ -129,17 +129,28 @@ private:
         lkpEnumToCmds(myCommandEnum, myCommandString);
         printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
 
-        //list
-        if (myCommandEnum == lkpMessage::LIST)
-        {
-            uint32_t clientNum = message->client_num();
-            printf("LIST: %u clients have connected..\n", clientNum);
-            lkpMessage::Return::NodeInfo node;
-            for (int i = 0; i < clientNum; ++i)
-            {
-                node = message->node_info(i);
-                printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+        switch(myCommandEnum){
+            case lkpMessage::UPDATE:
+                break;
+            case lkpMessage::RUN:
+                break;
+            case lkpMessage::RESULT:
+                break;
+            case lkpMessage::PUSH:
+                break;
+            case lkpMessage::LIST:{
+                uint32_t clientNum = message->client_num();
+                printf("LIST: %u clients have connected..\n", clientNum);
+                lkpMessage::Return::NodeInfo node;
+                for (int i = 0; i < clientNum; ++i)
+                {
+                    node = message->node_info(i);
+                    printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+                }
+                break;
             }
+            
+            default:break;
         }
     }
 

@@ -18,7 +18,7 @@ lkpServer::lkpServer(EventLoop *loop,
       codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
     //push的文件
-    kBufSize_(64 * 1024),
+      kBufSize_(64 * 1024),
 
       /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(flushInterval),
@@ -153,7 +153,6 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     lkpMessage::Return ReturnToSend;//返回给命令行的回复
     ReturnToSend.set_command(myCommand);
 
-    //lkp list
     if (myCommand == lkpMessage::LIST)
     {
         ReturnToSend.set_client_num(clientPool_.size());
