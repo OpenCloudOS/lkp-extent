@@ -786,11 +786,11 @@ class Return : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
 
   // accessors -------------------------------------------------------
 
-  // optional uint32 clinet_num = 1;
-  void clear_clinet_num();
-  static const int kClinetNumFieldNumber = 1;
-  ::google::protobuf::uint32 clinet_num() const;
-  void set_clinet_num(::google::protobuf::uint32 value);
+  // optional uint32 client_num = 1;
+  void clear_client_num();
+  static const int kClientNumFieldNumber = 1;
+  ::google::protobuf::uint32 client_num() const;
+  void set_client_num(::google::protobuf::uint32 value);
 
   // optional uint32 client_ok_num = 2;
   void clear_client_ok_num();
@@ -821,7 +821,7 @@ class Return : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::google::protobuf::uint32 clinet_num_;
+  ::google::protobuf::uint32 client_num_;
   ::google::protobuf::uint32 client_ok_num_;
   ::google::protobuf::RepeatedPtrField< ::lkpMessage::Return_NodeInfo > node_info_;
   int command_;
@@ -1297,18 +1297,18 @@ inline void Return_NodeInfo::set_allocated_node_msg(::std::string* node_msg) {
 
 // Return
 
-// optional uint32 clinet_num = 1;
-inline void Return::clear_clinet_num() {
-  clinet_num_ = 0u;
+// optional uint32 client_num = 1;
+inline void Return::clear_client_num() {
+  client_num_ = 0u;
 }
-inline ::google::protobuf::uint32 Return::clinet_num() const {
-  // @@protoc_insertion_point(field_get:lkpMessage.Return.clinet_num)
-  return clinet_num_;
+inline ::google::protobuf::uint32 Return::client_num() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.Return.client_num)
+  return client_num_;
 }
-inline void Return::set_clinet_num(::google::protobuf::uint32 value) {
+inline void Return::set_client_num(::google::protobuf::uint32 value) {
   
-  clinet_num_ = value;
-  // @@protoc_insertion_point(field_set:lkpMessage.Return.clinet_num)
+  client_num_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.Return.client_num)
 }
 
 // optional uint32 client_ok_num = 2;

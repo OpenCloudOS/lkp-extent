@@ -144,7 +144,7 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PushACK, _is_default_instance_));
   Return_descriptor_ = file->message_type(5);
   static const int Return_offsets_[4] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Return, clinet_num_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Return, client_num_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Return, client_ok_num_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Return, command_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Return, node_info_),
@@ -245,7 +245,7 @@ void protobuf_AddDesc_lkpProto_2eproto() {
     "mand\030\002 \001(\0162\025.lkpMessage.commandID\022\023\n\013ack"
     "_message\030\003 \001(\t\"\033\n\tHeartBeat\022\016\n\006status\030\001 "
     "\001(\010\".\n\007PushACK\022\016\n\006status\030\001 \001(\010\022\023\n\013ack_me"
-    "ssage\030\002 \001(\t\"\272\001\n\006Return\022\022\n\nclinet_num\030\001 \001"
+    "ssage\030\002 \001(\t\"\272\001\n\006Return\022\022\n\nclient_num\030\001 \001"
     "(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&\n\007command\030\003 \001"
     "(\0162\025.lkpMessage.commandID\022.\n\tnode_info\030\004"
     " \003(\0132\033.lkpMessage.Return.NodeInfo\032-\n\010Nod"
@@ -2639,7 +2639,7 @@ void Return_NodeInfo::InternalSwap(Return_NodeInfo* other) {
 // -------------------------------------------------------------------
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Return::kClinetNumFieldNumber;
+const int Return::kClientNumFieldNumber;
 const int Return::kClientOkNumFieldNumber;
 const int Return::kCommandFieldNumber;
 const int Return::kNodeInfoFieldNumber;
@@ -2666,7 +2666,7 @@ Return::Return(const Return& from)
 void Return::SharedCtor() {
     _is_default_instance_ = false;
   _cached_size_ = 0;
-  clinet_num_ = 0u;
+  client_num_ = 0u;
   client_ok_num_ = 0u;
   command_ = 0;
 }
@@ -2724,7 +2724,7 @@ void Return::Clear() {
            ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
 } while (0)
 
-  ZR_(clinet_num_, client_ok_num_);
+  ZR_(client_num_, client_ok_num_);
   command_ = 0;
 
 #undef ZR_HELPER_
@@ -2743,12 +2743,12 @@ bool Return::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional uint32 clinet_num = 1;
+      // optional uint32 client_num = 1;
       case 1: {
         if (tag == 8) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &clinet_num_)));
+                 input, &client_num_)));
 
         } else {
           goto handle_unusual;
@@ -2829,9 +2829,9 @@ failure:
 void Return::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:lkpMessage.Return)
-  // optional uint32 clinet_num = 1;
-  if (this->clinet_num() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->clinet_num(), output);
+  // optional uint32 client_num = 1;
+  if (this->client_num() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->client_num(), output);
   }
 
   // optional uint32 client_ok_num = 2;
@@ -2857,9 +2857,9 @@ void Return::SerializeWithCachedSizes(
 ::google::protobuf::uint8* Return::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:lkpMessage.Return)
-  // optional uint32 clinet_num = 1;
-  if (this->clinet_num() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->clinet_num(), target);
+  // optional uint32 client_num = 1;
+  if (this->client_num() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->client_num(), target);
   }
 
   // optional uint32 client_ok_num = 2;
@@ -2888,11 +2888,11 @@ int Return::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:lkpMessage.Return)
   int total_size = 0;
 
-  // optional uint32 clinet_num = 1;
-  if (this->clinet_num() != 0) {
+  // optional uint32 client_num = 1;
+  if (this->client_num() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->clinet_num());
+        this->client_num());
   }
 
   // optional uint32 client_ok_num = 2;
@@ -2945,8 +2945,8 @@ void Return::MergeFrom(const Return& from) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
   node_info_.MergeFrom(from.node_info_);
-  if (from.clinet_num() != 0) {
-    set_clinet_num(from.clinet_num());
+  if (from.client_num() != 0) {
+    set_client_num(from.client_num());
   }
   if (from.client_ok_num() != 0) {
     set_client_ok_num(from.client_ok_num());
@@ -2980,7 +2980,7 @@ void Return::Swap(Return* other) {
   InternalSwap(other);
 }
 void Return::InternalSwap(Return* other) {
-  std::swap(clinet_num_, other->clinet_num_);
+  std::swap(client_num_, other->client_num_);
   std::swap(client_ok_num_, other->client_ok_num_);
   std::swap(command_, other->command_);
   node_info_.UnsafeArenaSwap(&other->node_info_);
@@ -3061,18 +3061,18 @@ void Return_NodeInfo::clear_node_msg() {
 
 // Return
 
-// optional uint32 clinet_num = 1;
-void Return::clear_clinet_num() {
-  clinet_num_ = 0u;
+// optional uint32 client_num = 1;
+void Return::clear_client_num() {
+  client_num_ = 0u;
 }
- ::google::protobuf::uint32 Return::clinet_num() const {
-  // @@protoc_insertion_point(field_get:lkpMessage.Return.clinet_num)
-  return clinet_num_;
+ ::google::protobuf::uint32 Return::client_num() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.Return.client_num)
+  return client_num_;
 }
- void Return::set_clinet_num(::google::protobuf::uint32 value) {
+ void Return::set_client_num(::google::protobuf::uint32 value) {
   
-  clinet_num_ = value;
-  // @@protoc_insertion_point(field_set:lkpMessage.Return.clinet_num)
+  client_num_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.Return.client_num)
 }
 
 // optional uint32 client_ok_num = 2;

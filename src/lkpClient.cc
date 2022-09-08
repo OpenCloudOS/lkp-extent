@@ -219,11 +219,11 @@ int main(int argc, char *argv[])
 {
     uint16_t port = 7777;
     int seconds = 5;
-    string ip = "114.212.125.145";
+    string ip = "192.168.80.128";
 
     if (argc != 3)
     {
-        printf("请输入：1.端口号 2.发送OK的间隔\n");
+        printf("请输入：1.端口号 2.发送OK的间隔 注意：修改ip为自己的网卡地址！！！！！！！！！！！！\n");
     }
     else {
         ip = argv[1];

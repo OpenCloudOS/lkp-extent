@@ -60,22 +60,22 @@ public:
           client_(loop, InetAddress("127.0.0.1", port), "lkpCmdClient"),
           commandToSend_(commandToSend),
           dispatcher_(bind(&lkpCmdClient::onUnknownMsg, this,
-                    boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
+                           boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
           codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
-                    boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
+                      boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
     {
         //绑定业务回调函数
-        dispatcher_.registerMessageCallback<lkpMessage::Return>(bind(&lkpCmdClient::onReturnMsg, 
-                            this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-                        
+        dispatcher_.registerMessageCallback<lkpMessage::Return>(bind(&lkpCmdClient::onReturnMsg,
+                                                                     this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+
         //绑定新连接请求回调函数
         client_.setConnectionCallback(
             bind(&lkpCmdClient::onConnection, this, boost::placeholders::_1));
         //绑定client的信息接收回调函数到lkpCodec
         client_.setMessageCallback(
-            bind(&lkpCodec::onMessage, &codec_, 
-                boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
-       
+            bind(&lkpCodec::onMessage, &codec_,
+                 boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+
         client_.enableRetry();
     }
 
@@ -92,13 +92,14 @@ public:
     }
 
     //向服务器发送数据
-    void SendToServer(const lkpMessage::Command & messageToSend)
+    void SendToServer(const lkpMessage::Command &messageToSend)
     {
         if (connection_->connected())
         {
             codec_.send(connection_, messageToSend);
         }
-        else{
+        else
+        {
             printf("error to send!\n");
         }
     }
@@ -120,32 +121,33 @@ private:
         }
     }
 
-
     //收到Server的command运行结果return，打印return到terminal
-    void onReturnMsg(const TcpConnectionPtr &conn, const ReturnPtr& message, Timestamp time)
+    void onReturnMsg(const TcpConnectionPtr &conn, const ReturnPtr &message, Timestamp time)
     {
         lkpMessage::commandID myCommandEnum = message->command();
         string myCommandString;
         lkpEnumToCmds(myCommandEnum, myCommandString);
-        printf("lkpCommand: Receive a return message, command type: %s!\n",myCommandString.c_str());
-        //精力有限，先实现了list
-        if(myCommandEnum==lkpMessage::LIST){
-            uint32_t clientNum = message->clinet_num();
+        printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
+
+        //list
+        if (myCommandEnum == lkpMessage::LIST)
+        {
+            uint32_t clientNum = message->client_num();
             printf("LIST: %u clients have connected..\n", clientNum);
             lkpMessage::Return::NodeInfo node;
-            for(int i=0; i<clientNum;++i){
+            for (int i = 0; i < clientNum; ++i)
+            {
                 node = message->node_info(i);
-                printf("   Node %4u: %s\n", node.node_id(), node.node_msg().c_str());
+                printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
             }
         }
     }
 
     //收到未知数据包的回调函数
-    void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time)
+    void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
     {
         printf("Error!\n");
     }
-
 
     EventLoop *loop_;
     TcpClient client_;
@@ -171,27 +173,45 @@ int main(int argc, char *argv[])
     // [RUN] [TESTCASE] [NODEID] [VMCNT]
     // [UPDATE/RESULT] [NULL] [NODEID] [NULL]
     // [PUSH] [TESTCASE]  [NODEID] [NULL]
-    if(argc!=5) {
+    if (argc != 5)
+    {
         printf("  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n");
         return -1;
     }
-    else{
+    else
+    {
         lkpMessage::commandID lkpEnum;
-        if(lkpCmdsToEnum(string(argv[1]),lkpEnum))
+
+        //Command
+        if (lkpCmdsToEnum(string(argv[1]), lkpEnum)){
             commandToSend.set_command(lkpEnum);
-        else printf("lkpCmdClient Error: No supprt for command %s\n"
-                    "  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n",argv[1]);
-        
+        }
+            
+        else{
+            printf("lkpCmdClient Error: No supprt for command %s\n"
+                   "  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n",
+                   argv[1]);
+        }
+
         //TODO: should check if testcase name is valid
+
+        //Testcase
         commandToSend.set_testcase(string(argv[2]));
+
+        //NodeID
         int nodeID = atoi(argv[3]);
-        if(nodeID>=-1)
+        if (nodeID >= -1){
             commandToSend.set_node_id(nodeID);
+        }
+            
+        //ContainerCnt
         int dockerNum = atoi(argv[4]);
-        if(dockerNum>0)
-            commandToSend.set_docker_num(dockerNum);     
+        if (dockerNum > 0){
+            commandToSend.set_docker_num(dockerNum);
+        }
+            
     }
-    
+
     lkpCmdClient client(&loop, port, commandToSend);
     client.connect();
     loop.loop();

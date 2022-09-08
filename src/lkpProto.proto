@@ -57,7 +57,7 @@ message PushACK {
 // When Server collect all nodes CommandACK or Timeout
 // send Return to lkpCommandClient and printf
 message Return {
-    uint32 clinet_num = 1;
+    uint32 client_num = 1;
     uint32 client_ok_num = 2;
     commandID command = 3;
     message NodeInfo{

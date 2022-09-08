@@ -62,9 +62,9 @@ typedef std::shared_ptr<lkpMessage::HeartBeat> HeartBeatPtr;
 class lkpServer : noncopyable
 {
 public:
-    lkpServer(EventLoop *loop, 
-    const InetAddress &listenAddr, int numThreads,int idleSeconds,int sfd,
-    off_t rollSize,int flushInterval = 3);
+    lkpServer(EventLoop *loop,
+              const InetAddress &listenAddr, int numThreads, int idleSeconds,
+              off_t rollSize, int flushInterval = 3);
 
     ~lkpServer()
     {
@@ -136,7 +136,7 @@ private:
     
     //client pool nodeID -- cfd
     std::unordered_map<int, TcpConnectionPtr> connections_;
-    int nodeCount;
+    int nodeCount_;
     std::set<int> idleNodeID;//存放当前闲置的nodeID
 
     //time wheeling使用

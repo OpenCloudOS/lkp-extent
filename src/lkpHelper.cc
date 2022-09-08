@@ -5,6 +5,8 @@
 
 using namespace std;
 
+//commandID和"UPDATE"等字符串的映射关系
+
 std::vector<string> lkpCommands = {
     "UPDATE", "RUN", "RESULT", "PUSH", "LIST"
 };

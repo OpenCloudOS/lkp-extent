@@ -1,24 +1,24 @@
 #include "lkpServer.h"
 
-const char* TCPSERVER = "CMD_SUN";
-const char* CMDIPC = "CMDIPC";
+const char *TCPSERVER = "CMD_SUN";
+const char *CMDIPC = "CMDIPC";
 const int LEN = 4096;
 
 lkpServer::lkpServer(EventLoop *loop,
-                      const InetAddress &listenAddr, int numThreads, int idleSeconds, int sfd,
-                      off_t rollSize, int flushInterval)
+                     const InetAddress &listenAddr, int numThreads, int idleSeconds,
+                     off_t rollSize, int flushInterval)
     : server_(loop, listenAddr, "lkpServer"),
       loop_(loop),
       numThreads_(numThreads),
-      nodeCount(0),
-      
+      nodeCount_(0),
+
       /*lkpCodec & lkpDispatcher*/
       //绑定dispatcher_收到消息后的默认回调函数，这里设置为收到的message类型未知时的回调函数
-      dispatcher_(std::bind(&lkpServer::onUnknownMsg, this, 
-                        std::placeholders::_1,std::placeholders::_2, std::placeholders::_3)),
+      dispatcher_(std::bind(&lkpServer::onUnknownMsg, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
       //服务器收到消息后，解析形成对应的message，用message作为参数执行onProtobufMessage，哈系表已经存放了message类型对应的回调函数CallbackT
-      codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_, 
-                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+      codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
+                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
       /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(flushInterval),
@@ -33,24 +33,24 @@ lkpServer::lkpServer(EventLoop *loop,
 
 {
     //绑定业务lkpMessage::xxxxx的回调函数，lkpMessage::Command等在.proto文件中
-    dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg, 
-                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(std::bind(&lkpServer::onCommandACK, 
-                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::PushACK>(std::bind(&lkpServer::onPushACK, 
-                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::File>(std::bind(&lkpServer::onFileMsg, 
-                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(std::bind(&lkpServer::onHeartBeat, 
-                        this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));                                                
-                                                    
+    dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg,
+                                                                       this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(std::bind(&lkpServer::onCommandACK,
+                                                                          this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::PushACK>(std::bind(&lkpServer::onPushACK,
+                                                                       this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::File>(std::bind(&lkpServer::onFileMsg,
+                                                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(std::bind(&lkpServer::onHeartBeat,
+                                                                         this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
     //绑定新连接请求回调函数
     server_.setConnectionCallback(
         bind(&lkpServer::onConnection, this, boost::placeholders::_1));
 
     //绑定lkpCodec接收server新消息的回调函数，解析后形成正确类型的message
     server_.setMessageCallback(
-        bind(&lkpCodec::onMessage , &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+        bind(&lkpCodec::onMessage, &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
 
     //定时断开无响应客户端的连接
     connectionBuckets_.resize(idleSeconds);
@@ -64,7 +64,6 @@ lkpServer::lkpServer(EventLoop *loop,
     nextBuffer_->bzero();
     buffers_.reserve(16);
 }
-
 
 //启动服务器
 void lkpServer ::start()
@@ -80,21 +79,23 @@ void lkpServer ::start()
 }
 
 //向客户端发送数据
-void lkpServer ::SendToClient(const google::protobuf::Message& message, int nodeID)
+void lkpServer ::SendToClient(const google::protobuf::Message &message, int nodeID)
 {
-    MutexLockGuard lock(mutex_);
+    // MutexLockGuard lock(mutex_);
     //向nodeID发送数据
-    if (connections_.count(nodeID)&&connections_[nodeID]->connected())
+    if (connections_.count(nodeID) && connections_[nodeID]->connected())
     {
         codec_.send(connections_[nodeID], message);
     }
-    else printf("Send error!\n");
+    else
+        printf("No such client!\n");
 }
 
-//向命令行客户端发送数据
-
-void lkpServer ::SendToCmdClient(const google::protobuf::Message& message){
-    if(CmdConnection_->connected()){
+//向命令行回复结果
+void lkpServer ::SendToCmdClient(const google::protobuf::Message &message)
+{
+    if (CmdConnection_->connected())
+    {
         codec_.send(CmdConnection_, message);
     }
 }
@@ -108,25 +109,30 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 
     if (conn->connected())
     {
-        //如果是来自本地回环地址的连接
-        if(!conn->peerAddress().toIp().compare("127.0.0.1")){
-            if(!hasCmdConnected_){
+        //如果是来自本地回环地址的连接，应该是唯一的命令行
+        if (!conn->peerAddress().toIp().compare("127.0.0.1"))
+        {
+            if (!hasCmdConnected_)
+            {
                 CmdConnection_ = conn;
                 printf("lkpServer: Has connected to cmdClient!\n");
             }
-            else{
+            else
+            {
                 CmdConnection_->shutdown();
                 printf("lkpServer Error: Has connected to a CmdClient!\n");
             }
         }
-        else{
+        //和客户端建立连接
+        else
+        {
             //没有闲置的nodeID
             int nodeID = -1;
-            //考虑把下面的逻辑抽象成clientPool类？
+            //TO DO:client pool封装为类
 
             if (idleNodeID.empty())
             {
-                nodeID = nodeCount++;
+                nodeID = nodeCount_++;
                 connections_[nodeID] = conn; //新客户端加入
 
                 printf("新客户端加入，nodeID is:%d\n", nodeID);
@@ -154,57 +160,72 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
     }
 }
 
-//收到命令的回调函数，server转发给client， client执行
-void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time){
+//收到命令的回调函数，server转发给client， client执行。并且回复命令行
+void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr &message, Timestamp time)
+{
     lkpMessage::commandID myCommand = message->command();
     string myCommandString;
     lkpEnumToCmds(myCommand, myCommandString);
     printf("Recv a command: %s\n", myCommandString.c_str());
-    lkpMessage::Return ReturnToSend;
+    lkpMessage::Return ReturnToSend;//返回给命令行的回复
     ReturnToSend.set_command(myCommand);
-    if(myCommand==lkpMessage::LIST){
-        ReturnToSend.set_clinet_num(nodeCount);
-        ReturnToSend.set_client_ok_num(nodeCount);
-        lkpMessage::Return::NodeInfo* NodeInfoPtr;
-        for(auto it=connections_.begin();it!=connections_.end();++it){
+
+    //lkp list
+    if (myCommand == lkpMessage::LIST)
+    {
+        ReturnToSend.set_client_num(nodeCount_ - idleNodeID.size());//???
+        ReturnToSend.set_client_ok_num(nodeCount_ - idleNodeID.size());
+
+        //所有在线客户端的信息
+        lkpMessage::Return::NodeInfo *NodeInfoPtr;
+        for (auto it = connections_.begin(); it != connections_.end(); ++it)
+        {
             NodeInfoPtr = ReturnToSend.add_node_info();
             NodeInfoPtr->set_node_id(it->first);
             NodeInfoPtr->set_node_msg(it->second->peerAddress().toIp());
         }
+
+        //回复给命令行
         SendToCmdClient(ReturnToSend);
     }
-    else{
-        if(!message->node_id()){
-        //send to all nodes
+    else
+    {
+        if (!message->node_id())
+        {
+            //send to all nodes
+        }
+        else
+        {
+            //send to one node
+        }
     }
-    else{
-        //send to one node
-    }
-    }
-    
 }
 
 //收到pushack的回调函数，应该开始发testecase的文件内容
-void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr& message, Timestamp time){
+void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr &message, Timestamp time)
+{
     printf("recv a CommandACK, status is %d", message->status());
     //TODO
 }
 
 //收到command ACK的回调函数，应该使统计数量++
-void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr& message, Timestamp time){
+void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr &message, Timestamp time)
+{
     printf("recv a CommandACK, status is %d", message->status());
     //TODO
 }
 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
-void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time){
+void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &message, Timestamp time)
+{
     printf("recv a file msg\n  file name is %s\n  file length is %u\n",
-                message->file_name().c_str(), message->file_len());
+           message->file_name().c_str(), message->file_len());
     //TODO
 }
 
 //收到心跳包的回调函数
-void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& message, Timestamp time){
+void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &message, Timestamp time)
+{
     //printf("recv a HeartBeat, status is %d\n", (int)message->status());
     //time wheeling
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
@@ -217,7 +238,8 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr& m
 }
 
 //收到未知数据包的回调函数
-void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time){
+void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
+{
     printf("error! shut down the connection\n");
 }
 
@@ -228,7 +250,7 @@ void lkpServer::onTimer()
     // dumpConnectionBuckets();
 }
 
-//打印引用计数
+//打印心跳连接情况
 void lkpServer::dumpConnectionBuckets() const
 {
     int idx = 0;
@@ -248,7 +270,6 @@ void lkpServer::dumpConnectionBuckets() const
     }
     printf("\n");
 }
-
 
 //onMessage调用，负责向一级缓冲区写
 void lkpServer::append(const char *logline, int len)
@@ -278,7 +299,6 @@ void lkpServer::append(const char *logline, int len)
         cond_.notify();                       //生产者释放条件变量，通知后端条件满足
     }
 }
-
 
 //后端调用，向日志文件写 muduo::Thread thread_ 绑定该函数，实现后端线程负责写
 void lkpServer::threadFunc()
@@ -365,5 +385,3 @@ void lkpServer::threadFunc()
         buffersToWrite.clear();
     }
 }
-
-
