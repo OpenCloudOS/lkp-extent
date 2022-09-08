@@ -172,33 +172,43 @@ private:
     }
 
 
-
+    int i = 0;
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
     {
+        i++;
+
         //文件发送结束
         if (message->file_type() == lkpMessage::File::END)
         {
+            printf("i:%d\n",i);
+            
             //获取文件的大小
             struct stat statbuf;
             stat(fileName_.c_str(), &statbuf);
             int recvSize = statbuf.st_size;
             //检查文件是否完整
             if(recvSize != fileSize_){
+                printf("recvSize:%d,fileSize_:%d\n",recvSize,fileSize_);
                 printf("file is not complete!\n");
             }
 
+            ::fclose(fp_);
             return;
         }
         //第一次接收
         else if (message->first_patch())
         {
-            fileName_ = message->file_name();
+            nodeID_ = stoi(message->file_name());
+            fileName_ = "./testcase/node" + std::to_string(nodeID_) + "/client_testcase";
             printf("fileName_:%s\n",fileName_.c_str());
+
             fileSize_ = message->file_size();
             fp_ = ::fopen(fileName_.c_str(), "we");
             assert(fp_);
         }
+
+
         //每次接收的都输出
         fwrite(message->content().c_str(), 1, message->patch_len(), fp_);
     }
@@ -240,7 +250,8 @@ private:
     int seconds_;
 
     int fileSize_;//文件大小
-    string fileName_;//文件名称
+    string fileName_;
+    int nodeID_;
     FILE *fp_;
 };
 

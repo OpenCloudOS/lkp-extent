@@ -84,10 +84,6 @@ void lkpServer ::start()
 //向客户端发送数据
 void lkpServer ::SendToClient(const google::protobuf::Message &message, const TcpConnectionPtr& conn)
 {
-    // MutexLockGuard lock(mutex_);
-    //向nodeID发送数据
-
-
     if (conn && conn->connected())
     {
         codec_.send(conn, message);
@@ -139,12 +135,6 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
             connectionBuckets_.back().insert(entry);
             WeakEntryPtr weakEntry(entry); //弱引用是为了避免增加引用计数
             conn->setContext(weakEntry);   //把弱引用放入TcpConnectionPtr的setContext，从而可以取出
-
-
-            // lkpMessage::File messageFile;
-            // messageFile.set_file_name("test onWriteComplete");
-            // conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, boost::placeholders::_1));
-            // SendToClient(messageFile, conn);
         }
     }
     else
@@ -244,7 +234,7 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
 
                 lkpMessage::File fileMessage;
                 fileMessage.set_file_type(lkpMessage::File::TESTCASE);
-                fileMessage.set_file_name(fileName + "nodeID" + std::to_string(nodeID));
+                fileMessage.set_file_name(std::to_string(nodeID));
                 fileMessage.set_file_size(fileSize);
                 fileMessage.set_patch_len(nread);
                 fileMessage.set_first_patch(true);
@@ -266,13 +256,16 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         }
     }
 }
-
+int i = 1;
 void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 {
+    i++;
+
     FilePtr &fp = fpMap[conn];
 
     char buf[kBufSize_];
-    size_t nread = ::fread(buf, 1, sizeof buf, get_pointer(fp));
+    size_t nread = ::fread(buf, 1, sizeof(buf), get_pointer(fp));
+
     //续传
     if (nread > 0)
     {
@@ -290,9 +283,13 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
         //发送结束信号
         lkpMessage::File fileMessage;
         fileMessage.set_file_type(lkpMessage::File::END);
-        SendToClient(fileMessage,conn);
 
         conn->setWriteCompleteCallback(NULL);
+
+        SendToClient(fileMessage,conn);
+
+        printf("i:%d\n",i);
+
         printf("push testcase to client end!\n");
     }
 }
