@@ -49,6 +49,7 @@
 #include "lib/lkpDispatcher.h"
 #include "lkpHelper.h"
 
+
 using namespace muduo;
 using namespace muduo::net;
 
@@ -134,10 +135,11 @@ private:
     TcpConnectionPtr CmdConnection_;
     bool hasCmdConnected_ = false;
     
+
+
     //client pool nodeID -- cfd
-    std::unordered_map<int, TcpConnectionPtr> connections_;
-    int nodeCount_;
-    std::set<int> idleNodeID;//存放当前闲置的nodeID
+    class lkpClientPool clientPool_;
+
 
     //time wheeling使用
     typedef std::weak_ptr<muduo::net::TcpConnection>WeakTcpConnectionPtr;
@@ -160,10 +162,9 @@ private:
             else{
                 return;
             }
-            // printf("~Entry，shutdown\n");
+            
             //关闭客户端连接时，产生空闲nodeID
-            Entry_server->idleNodeID.insert(Entry_nodeID);
-            // printf("~Entry，insert\n");
+            Entry_server->clientPool_.del(Entry_nodeID);
         }
         WeakTcpConnectionPtr weakConn_;//弱指针，不会导致计数增加
         lkpServer* Entry_server;//存放Entry对应的CMDserver

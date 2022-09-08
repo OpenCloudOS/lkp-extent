@@ -10,8 +10,6 @@ lkpServer::lkpServer(EventLoop *loop,
     : server_(loop, listenAddr, "lkpServer"),
       loop_(loop),
       numThreads_(numThreads),
-      nodeCount_(0),
-
       /*lkpCodec & lkpDispatcher*/
       //绑定dispatcher_收到消息后的默认回调函数，这里设置为收到的message类型未知时的回调函数
       dispatcher_(std::bind(&lkpServer::onUnknownMsg, this,
@@ -70,8 +68,6 @@ void lkpServer ::start()
 {
     server_.start();
 
-    idleNodeID.clear();
-
     //logging
     running_ = true; //允许后端写日志
     thread_.start(); //启动后端线程threadFunc
@@ -83,9 +79,11 @@ void lkpServer ::SendToClient(const google::protobuf::Message &message, int node
 {
     // MutexLockGuard lock(mutex_);
     //向nodeID发送数据
-    if (connections_.count(nodeID) && connections_[nodeID]->connected())
+    TcpConnectionPtr conn = clientPool_.getConn(nodeID);
+
+    if (conn && conn->connected())
     {
-        codec_.send(connections_[nodeID], message);
+        codec_.send(conn, message);
     }
     else
         printf("No such client!\n");
@@ -126,26 +124,8 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
         //和客户端建立连接
         else
         {
-            //没有闲置的nodeID
-            int nodeID = -1;
-            //TO DO:client pool封装为类
-
-            if (idleNodeID.empty())
-            {
-                nodeID = nodeCount_++;
-                connections_[nodeID] = conn; //新客户端加入
-
-                printf("新客户端加入，nodeID is:%d\n", nodeID);
-            }
-            //分配最小的闲置nodeID
-            else
-            {
-                nodeID = *idleNodeID.begin();
-                idleNodeID.erase(idleNodeID.begin());
-                connections_[nodeID] = conn; //新客户端加入
-
-                printf("新客户端加入，nodeID is:%d\n", nodeID);
-            }
+            int nodeID = clientPool_.add(conn);
+            printf("onConnection nodeID is:%d\n",nodeID);
 
             //time wheeling
             EntryPtr entry(new Entry(conn, this, nodeID)); //为新客户端分配Entry
@@ -173,12 +153,12 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     //lkp list
     if (myCommand == lkpMessage::LIST)
     {
-        ReturnToSend.set_client_num(nodeCount_ - idleNodeID.size());//???
-        ReturnToSend.set_client_ok_num(nodeCount_ - idleNodeID.size());
+        ReturnToSend.set_client_num(clientPool_.size());//???
+        ReturnToSend.set_client_ok_num(clientPool_.size());
 
         //所有在线客户端的信息
         lkpMessage::Return::NodeInfo *NodeInfoPtr;
-        for (auto it = connections_.begin(); it != connections_.end(); ++it)
+        for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it)
         {
             NodeInfoPtr = ReturnToSend.add_node_info();
             NodeInfoPtr->set_node_id(it->first);

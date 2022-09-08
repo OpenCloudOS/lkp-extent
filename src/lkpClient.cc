@@ -218,7 +218,7 @@ private:
 int main(int argc, char *argv[])
 {
     uint16_t port = 7777;
-    int seconds = 5;
+    int seconds = 3;
     string ip = "192.168.80.128";
 
     if (argc != 3)
