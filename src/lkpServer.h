@@ -87,7 +87,8 @@ public:
     void setThreadNum(int num);
 
 private:
-
+    //向客户端发送文件
+    void pushToClient(const RecvCommandPtr &message);
     //向客户端发送数据
     void SendToClient(const google::protobuf::Message& message, const TcpConnectionPtr& conn);
     //向命令行客户端发送数据
