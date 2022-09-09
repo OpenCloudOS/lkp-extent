@@ -76,13 +76,14 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _is_default_instance_));
   File_descriptor_ = file->message_type(1);
-  static const int File_offsets_[6] = {
+  static const int File_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, patch_len_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, file_size_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, first_patch_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, content_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, node_id_),
   };
   File_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -240,23 +241,24 @@ void protobuf_AddDesc_lkpProto_2eproto() {
     "\022&\n\007command\030\001 \001(\0162\025.lkpMessage.commandID"
     "\022\023\n\013send_to_all\030\002 \001(\010\022\020\n\010testcase\030\003 \001(\t\022"
     "\022\n\ndocker_num\030\004 \001(\r\022\025\n\rtesetcase_len\030\005 \001"
-    "(\r\022\017\n\007node_id\030\006 \001(\r\"\302\001\n\004File\022,\n\tfile_typ"
+    "(\r\022\017\n\007node_id\030\006 \001(\r\"\323\001\n\004File\022,\n\tfile_typ"
     "e\030\001 \001(\0162\031.lkpMessage.File.filetype\022\021\n\tfi"
     "le_name\030\002 \001(\t\022\021\n\tpatch_len\030\003 \001(\r\022\021\n\tfile"
     "_size\030\004 \001(\r\022\023\n\013first_patch\030\005 \001(\010\022\017\n\007cont"
-    "ent\030\006 \001(\014\"-\n\010filetype\022\014\n\010TESTCASE\020\000\022\n\n\006R"
-    "ESULT\020\001\022\007\n\003END\020\002\"Y\n\nCommandACK\022\016\n\006status"
-    "\030\001 \001(\010\022&\n\007command\030\002 \001(\0162\025.lkpMessage.com"
-    "mandID\022\023\n\013ack_message\030\003 \001(\t\"\033\n\tHeartBeat"
-    "\022\016\n\006status\030\001 \001(\010\"\?\n\007PushACK\022\016\n\006status\030\001 "
-    "\001(\010\022\023\n\013ack_message\030\002 \001(\t\022\017\n\007node_id\030\003 \001("
-    "\r\"\272\001\n\006Return\022\022\n\nclient_num\030\001 \001(\r\022\025\n\rclie"
-    "nt_ok_num\030\002 \001(\r\022&\n\007command\030\003 \001(\0162\025.lkpMe"
-    "ssage.commandID\022.\n\tnode_info\030\004 \003(\0132\033.lkp"
-    "Message.Return.NodeInfo\032-\n\010NodeInfo\022\017\n\007n"
-    "ode_id\030\001 \001(\r\022\020\n\010node_msg\030\002 \001(\t*@\n\tcomman"
-    "dID\022\n\n\006UPDATE\020\000\022\007\n\003RUN\020\001\022\n\n\006RESULT\020\002\022\010\n\004"
-    "PUSH\020\003\022\010\n\004LIST\020\004b\006proto3", 824);
+    "ent\030\006 \001(\014\022\017\n\007node_id\030\007 \001(\r\"-\n\010filetype\022\014"
+    "\n\010TESTCASE\020\000\022\n\n\006RESULT\020\001\022\007\n\003END\020\002\"Y\n\nCom"
+    "mandACK\022\016\n\006status\030\001 \001(\010\022&\n\007command\030\002 \001(\016"
+    "2\025.lkpMessage.commandID\022\023\n\013ack_message\030\003"
+    " \001(\t\"\033\n\tHeartBeat\022\016\n\006status\030\001 \001(\010\"\?\n\007Pus"
+    "hACK\022\016\n\006status\030\001 \001(\010\022\023\n\013ack_message\030\002 \001("
+    "\t\022\017\n\007node_id\030\003 \001(\r\"\272\001\n\006Return\022\022\n\nclient_"
+    "num\030\001 \001(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&\n\007comm"
+    "and\030\003 \001(\0162\025.lkpMessage.commandID\022.\n\tnode"
+    "_info\030\004 \003(\0132\033.lkpMessage.Return.NodeInfo"
+    "\032-\n\010NodeInfo\022\017\n\007node_id\030\001 \001(\r\022\020\n\010node_ms"
+    "g\030\002 \001(\t*@\n\tcommandID\022\n\n\006UPDATE\020\000\022\007\n\003RUN\020"
+    "\001\022\n\n\006RESULT\020\002\022\010\n\004PUSH\020\003\022\010\n\004LIST\020\004b\006proto"
+    "3", 841);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lkpProto.proto", &protobuf_RegisterTypes);
   Command::default_instance_ = new Command();
@@ -898,6 +900,7 @@ const int File::kPatchLenFieldNumber;
 const int File::kFileSizeFieldNumber;
 const int File::kFirstPatchFieldNumber;
 const int File::kContentFieldNumber;
+const int File::kNodeIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 File::File()
@@ -928,6 +931,7 @@ void File::SharedCtor() {
   file_size_ = 0u;
   first_patch_ = false;
   content_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  node_id_ = 0u;
 }
 
 File::~File() {
@@ -988,6 +992,7 @@ void File::Clear() {
   ZR_(file_type_, first_patch_);
   file_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  node_id_ = 0u;
 
 #undef ZR_HELPER_
 #undef ZR_
@@ -1090,6 +1095,21 @@ bool File::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(56)) goto parse_node_id;
+        break;
+      }
+
+      // optional uint32 node_id = 7;
+      case 7: {
+        if (tag == 56) {
+         parse_node_id:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &node_id_)));
+
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -1155,6 +1175,11 @@ void File::SerializeWithCachedSizes(
       6, this->content(), output);
   }
 
+  // optional uint32 node_id = 7;
+  if (this->node_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(7, this->node_id(), output);
+  }
+
   // @@protoc_insertion_point(serialize_end:lkpMessage.File)
 }
 
@@ -1198,6 +1223,11 @@ void File::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         6, this->content(), target);
+  }
+
+  // optional uint32 node_id = 7;
+  if (this->node_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(7, this->node_id(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:lkpMessage.File)
@@ -1245,6 +1275,13 @@ int File::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->content());
+  }
+
+  // optional uint32 node_id = 7;
+  if (this->node_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->node_id());
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -1295,6 +1332,9 @@ void File::MergeFrom(const File& from) {
 
     content_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.content_);
   }
+  if (from.node_id() != 0) {
+    set_node_id(from.node_id());
+  }
 }
 
 void File::CopyFrom(const ::google::protobuf::Message& from) {
@@ -1327,6 +1367,7 @@ void File::InternalSwap(File* other) {
   std::swap(file_size_, other->file_size_);
   std::swap(first_patch_, other->first_patch_);
   content_.Swap(&other->content_);
+  std::swap(node_id_, other->node_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -1484,6 +1525,20 @@ void File::clear_content() {
   }
   content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.File.content)
+}
+
+// optional uint32 node_id = 7;
+void File::clear_node_id() {
+  node_id_ = 0u;
+}
+ ::google::protobuf::uint32 File::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.File.node_id)
+  return node_id_;
+}
+ void File::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.File.node_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

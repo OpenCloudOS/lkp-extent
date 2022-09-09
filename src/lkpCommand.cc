@@ -134,8 +134,22 @@ private:
                 break;
             case lkpMessage::RUN:
                 break;
-            case lkpMessage::RESULT:
+            case lkpMessage::RESULT:{
+                uint32_t clientNum = message->client_num();
+                uint32_t clientOKNum = message->client_ok_num();
+                printf("PUSH: %u clients have connected..\n", clientNum);
+                lkpMessage::Return::NodeInfo node;
+                for (int i = 0; i < clientNum - clientOKNum; ++i)
+                {
+                    node = message->node_info(i);
+                    printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+                }
+                if(clientNum == clientOKNum){
+                    printf("all result successful\n");
+                }
                 break;
+            }
+                
             case lkpMessage::PUSH:{
                 uint32_t clientNum = message->client_num();
                 uint32_t clientOKNum = message->client_ok_num();
@@ -145,6 +159,9 @@ private:
                 {
                     node = message->node_info(i);
                     printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+                }
+                if(clientNum == clientOKNum){
+                    printf("all push successful\n");
                 }
                 break;
             }
@@ -157,6 +174,7 @@ private:
                     node = message->node_info(i);
                     printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
                 }
+
                 break;
             }
             

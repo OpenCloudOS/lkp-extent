@@ -349,6 +349,12 @@ class File : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_content();
   void set_allocated_content(::std::string* content);
 
+  // optional uint32 node_id = 7;
+  void clear_node_id();
+  static const int kNodeIdFieldNumber = 7;
+  ::google::protobuf::uint32 node_id() const;
+  void set_node_id(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:lkpMessage.File)
  private:
 
@@ -360,6 +366,7 @@ class File : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::uint32 file_size_;
   bool first_patch_;
   ::google::protobuf::internal::ArenaStringPtr content_;
+  ::google::protobuf::uint32 node_id_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_lkpProto_2eproto();
   friend void protobuf_AssignDesc_lkpProto_2eproto();
@@ -1125,6 +1132,20 @@ inline void File::set_allocated_content(::std::string* content) {
   }
   content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.File.content)
+}
+
+// optional uint32 node_id = 7;
+inline void File::clear_node_id() {
+  node_id_ = 0u;
+}
+inline ::google::protobuf::uint32 File::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.File.node_id)
+  return node_id_;
+}
+inline void File::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.File.node_id)
 }
 
 // -------------------------------------------------------------------

@@ -173,7 +173,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
 
         lkpMessage::File fileMessage;
         fileMessage.set_file_type(lkpMessage::File::TESTCASE);
-        fileMessage.set_file_name(std::to_string(nodeID));
+        fileMessage.set_node_id(nodeID);
         fileMessage.set_file_size(fileSize);
         fileMessage.set_patch_len(nread);
         fileMessage.set_first_patch(true);
@@ -207,7 +207,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
 
             lkpMessage::File fileMessage;
             fileMessage.set_file_type(lkpMessage::File::TESTCASE);
-            fileMessage.set_file_name(std::to_string(nodeID));
+            fileMessage.set_node_id(nodeID);
             fileMessage.set_file_size(fileSize);
             fileMessage.set_patch_len(nread);
             fileMessage.set_first_patch(true);
@@ -215,6 +215,39 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
 
             conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, boost::placeholders::_1)); //发完一次后继续发
             SendToClient(fileMessage, conn);
+        }
+    }
+}
+
+void lkpServer::resultToClient(const RecvCommandPtr &message)
+{
+    //单播
+    if (!message->send_to_all())
+    {
+        clientNum_ = 1;
+
+        lkpMessage::Command result;
+        result.set_command(lkpMessage::commandID::RESULT);
+        result.set_testcase(message->testcase());
+        result.set_node_id(message->node_id());
+
+        TcpConnectionPtr conn = clientPool_.getConn(message->node_id());
+        SendToClient(result, conn);
+    }
+    //广播
+    else
+    {   
+        clientNum_ = clientPool_.size();
+
+        //对所有节点作一次单播
+        for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it){
+            TcpConnectionPtr conn = it->second;
+
+            lkpMessage::Command result;
+            result.set_command(lkpMessage::commandID::RESULT);
+            result.set_testcase(message->testcase());
+            result.set_node_id(it->first);
+            SendToClient(result, conn);
         }
     }
 }
@@ -255,16 +288,10 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     {
         pushToClient(message);
     }
-    else 
+    //lkp result
+    else if (myCommand == lkpMessage::RESULT)
     {
-        if (!message->node_id())
-        {
-            //send to all nodes
-        }
-        else
-        {
-            //send to one node
-        }
+        resultToClient(message);
     }
 }
 
@@ -299,6 +326,7 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
         SendToClient(fileMessage,conn);
 
         printf("push testcase to client end!\n");
+
     }
 }
 
@@ -346,9 +374,74 @@ void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
 void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &message, Timestamp time)
 {
-    printf("recv a file msg\n  file name is %s\n  file length is %u\n",
-           message->file_name().c_str(), message->file_size());
-    //TODO
+    //文件发送结束
+    if (message->file_type() == lkpMessage::File::END)
+    {
+        ackTimes_++;
+
+        ::fclose(outputfpMap_[conn]); //必须关闭，不然会错误
+
+        //获取文件的大小
+        struct stat statbuf;
+        stat(fileNameMap_[conn].c_str(), &statbuf);
+        int recvSize = statbuf.st_size;
+
+        //检查文件是否完整
+        if (recvSize != fileSizeMap_[conn])
+        {
+            printf("recvSize:%d,fileSize_:%d\n", recvSize, fileSizeMap_[conn]);
+            printf("node:%d file is not complete!\n",message->node_id());
+
+            clientPool_.update_info(message->node_id(),"file is not completed");
+        }
+        else
+        {
+            printf("recv a complete file\n");
+
+            //成功
+            clientOKNum_++;
+        }
+
+        //回复给命令行
+        if (ackTimes_ == clientNum_)
+        {
+            lkpMessage::Return Return;
+            Return.set_command(lkpMessage::commandID::RESULT);
+            Return.set_client_num(clientNum_);
+            Return.set_client_ok_num(clientOKNum_);
+
+            //出错的节点记录在info
+            for (auto it = clientPool_.node_info.begin(); it != clientPool_.node_info.end(); ++it)
+            {
+                lkpMessage::Return::NodeInfo *NodeInfoPtr = Return.add_node_info();
+                NodeInfoPtr->set_node_id(it->first);
+                NodeInfoPtr->set_node_msg(it->second);
+            }
+
+            SendToCmdClient(Return);
+        }
+
+        return;
+    }
+    //第一次接收
+    else if (message->first_patch())
+    {
+        int nodeID = stoi(message->file_name());
+        fileNameMap_[conn] = "./testcase/server/result" + std::to_string(nodeID);
+        printf("fileName_:%s\n", fileNameMap_[conn].c_str());
+
+        fileSizeMap_[conn] = message->file_size();
+        FILE *fp = ::fopen(fileNameMap_[conn].c_str(), "wb");
+        if (!fp)
+        {
+            perror("open file fail!!\n");
+            return;
+        }
+        outputfpMap_[conn] = fp;
+    }
+
+    //每次接收的都输出
+    fwrite(message->content().c_str(), 1, message->patch_len(), outputfpMap_[conn]);
 }
 
 //收到心跳包的回调函数

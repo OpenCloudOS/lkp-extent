@@ -35,6 +35,7 @@ message File {
     uint32 file_size = 4;
     bool first_patch = 5;
     bytes content = 6;
+    uint32 node_id = 7;
 }
 
 // Client which received Command should return a CommandACK

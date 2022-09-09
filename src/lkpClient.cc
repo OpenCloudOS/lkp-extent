@@ -42,6 +42,7 @@
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
 #include <sys/stat.h>
+#include <boost/shared_ptr.hpp>
 
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
@@ -55,7 +56,7 @@ typedef std::shared_ptr<lkpMessage::CommandACK> CommandACKPtr;
 typedef std::shared_ptr<lkpMessage::File> RecvFilePtr;
 typedef std::shared_ptr<lkpMessage::Command> RecvCommandPtr;
 typedef std::shared_ptr<lkpMessage::HeartBeat> HeartBeatPtr;
-
+typedef boost::shared_ptr<FILE> FilePtr;
 
 class lkpClient : boost::noncopyable
 {
@@ -64,6 +65,7 @@ public:
         : loop_(loop),
           client_(loop, serverAddr, "lkpClient"),
           seconds_(seconds),
+          kBufSize_(64*1024),
           dispatcher_(bind(&lkpClient::onUnknownMsg, this,
                     boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
           codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
@@ -153,7 +155,8 @@ private:
                 ACK.set_command(message->command());
                 //To DO:
                 //send result to Server
-                //sendFile(string filename);
+                onResult(conn,message);
+
                 ACK.set_status(true);
                 SendToServer(ACK);
                 break;
@@ -171,6 +174,73 @@ private:
 
     }
 
+    //收到result
+    void onResult(const TcpConnectionPtr &conn,const RecvCommandPtr& message){
+        nodeID_ = message->node_id();
+        
+        string fileName = "./testcase/node" + std::to_string(nodeID_) + "/" + message->testcase();
+        printf("result fileName:%s\n",fileName.c_str());
+
+        //获取文件的大小
+        struct stat statbuf;
+        stat(fileName.c_str(), &statbuf);
+        int fileSize = statbuf.st_size;
+
+        FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
+        if (!fp)
+        {
+            perror("open file fail!!\n");
+            return;
+        }
+
+        FilePtr ctx(fp, ::fclose); //多了::fclose参数，表示fp对象的引用计数器变成0时，调用::fclose来销毁fp
+        conn->setContext(ctx);//把TcpConnectionPtr对象与fp绑定 
+        char buf[kBufSize_];
+        size_t nread = ::fread(buf, 1, sizeof buf, fp); //读取kBufSize的内容
+
+        lkpMessage::File fileMessage;
+        fileMessage.set_file_type(lkpMessage::File::RESULT);
+        fileMessage.set_file_name(std::to_string(nodeID_));
+        fileMessage.set_file_size(fileSize);
+        fileMessage.set_patch_len(nread);
+        fileMessage.set_first_patch(true);
+        fileMessage.set_content(buf);
+
+        conn->setWriteCompleteCallback(bind(&lkpClient::onWriteComplete, this, boost::placeholders::_1)); //发完一次后继续发
+        SendToServer(fileMessage);
+    }
+
+    //每次发送64kb
+    void onWriteComplete(const TcpConnectionPtr &conn)
+    {
+        const FilePtr &fp = boost::any_cast<const FilePtr &>(conn->getContext());
+
+        char buf[kBufSize_];
+        size_t nread = ::fread(buf, 1, sizeof(buf), get_pointer(fp));
+
+        //续传
+        if (nread > 0)
+        {
+            lkpMessage::File fileMessage;
+            fileMessage.set_file_type(lkpMessage::File::RESULT);
+            fileMessage.set_first_patch(false);
+            fileMessage.set_patch_len(nread);
+            fileMessage.set_content(buf);
+
+            SendToServer(fileMessage);
+        }
+        //结束
+        else
+        {
+            //发送结束信号
+            lkpMessage::File fileMessage;
+            fileMessage.set_file_type(lkpMessage::File::END);
+
+            conn->setWriteCompleteCallback(NULL);
+
+            SendToServer(fileMessage);
+        }
+    }
 
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
@@ -178,7 +248,7 @@ private:
         //文件发送结束
         if (message->file_type() == lkpMessage::File::END)
         {
-            ::fclose(fp_);//必须关闭，不然会错误
+            fclose(fp_);//必须关闭，不然会错误
             
             //获取文件的大小
             struct stat statbuf;
@@ -213,12 +283,12 @@ private:
         //第一次接收
         else if (message->first_patch())
         {
-            nodeID_ = stoi(message->file_name());
+            nodeID_ = message->node_id();
             fileName_ = "./testcase/node" + std::to_string(nodeID_) + "/client_testcase";
             printf("fileName_:%s\n",fileName_.c_str());
 
             fileSize_ = message->file_size();
-            fp_ = ::fopen(fileName_.c_str(), "we");
+            fp_ = ::fopen(fileName_.c_str(), "wb");
             assert(fp_);
         }
 
@@ -266,6 +336,7 @@ private:
     string fileName_;
     int nodeID_;
     FILE *fp_;
+    int kBufSize_;
 };
 
 int main(int argc, char *argv[])

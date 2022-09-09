@@ -87,6 +87,9 @@ public:
     void setThreadNum(int num);
 
 private:
+    //收集客户端的文件
+    void resultToClient(const RecvCommandPtr &message);
+
     //向客户端发送文件
     void pushToClient(const RecvCommandPtr &message);
     //向客户端发送数据
@@ -149,6 +152,11 @@ private:
     //conn -- fp
     std::unordered_map<TcpConnectionPtr,FilePtr>fpMap;
     int kBufSize_;
+
+    //result conn -- filename filesize
+    std::unordered_map<TcpConnectionPtr,string>fileNameMap_;
+    std::unordered_map<TcpConnectionPtr,int>fileSizeMap_;
+    std::unordered_map<TcpConnectionPtr,FILE*>outputfpMap_;
 
     //client_ok_num
     int clientNum_;
