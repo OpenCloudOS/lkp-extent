@@ -55,6 +55,7 @@ message HeartBeat {
 message PushACK {
     bool status = 1;
     string ack_message = 2;
+    uint32 node_id = 3;
 }
 
 // When Server collect all nodes CommandACK or Timeout

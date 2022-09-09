@@ -129,9 +129,10 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HeartBeat, _internal_metadata_),
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HeartBeat, _is_default_instance_));
   PushACK_descriptor_ = file->message_type(4);
-  static const int PushACK_offsets_[2] = {
+  static const int PushACK_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PushACK, status_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PushACK, ack_message_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PushACK, node_id_),
   };
   PushACK_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -247,15 +248,15 @@ void protobuf_AddDesc_lkpProto_2eproto() {
     "ESULT\020\001\022\007\n\003END\020\002\"Y\n\nCommandACK\022\016\n\006status"
     "\030\001 \001(\010\022&\n\007command\030\002 \001(\0162\025.lkpMessage.com"
     "mandID\022\023\n\013ack_message\030\003 \001(\t\"\033\n\tHeartBeat"
-    "\022\016\n\006status\030\001 \001(\010\".\n\007PushACK\022\016\n\006status\030\001 "
-    "\001(\010\022\023\n\013ack_message\030\002 \001(\t\"\272\001\n\006Return\022\022\n\nc"
-    "lient_num\030\001 \001(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&"
-    "\n\007command\030\003 \001(\0162\025.lkpMessage.commandID\022."
-    "\n\tnode_info\030\004 \003(\0132\033.lkpMessage.Return.No"
-    "deInfo\032-\n\010NodeInfo\022\017\n\007node_id\030\001 \001(\r\022\020\n\010n"
-    "ode_msg\030\002 \001(\t*@\n\tcommandID\022\n\n\006UPDATE\020\000\022\007"
-    "\n\003RUN\020\001\022\n\n\006RESULT\020\002\022\010\n\004PUSH\020\003\022\010\n\004LIST\020\004b"
-    "\006proto3", 807);
+    "\022\016\n\006status\030\001 \001(\010\"\?\n\007PushACK\022\016\n\006status\030\001 "
+    "\001(\010\022\023\n\013ack_message\030\002 \001(\t\022\017\n\007node_id\030\003 \001("
+    "\r\"\272\001\n\006Return\022\022\n\nclient_num\030\001 \001(\r\022\025\n\rclie"
+    "nt_ok_num\030\002 \001(\r\022&\n\007command\030\003 \001(\0162\025.lkpMe"
+    "ssage.commandID\022.\n\tnode_info\030\004 \003(\0132\033.lkp"
+    "Message.Return.NodeInfo\032-\n\010NodeInfo\022\017\n\007n"
+    "ode_id\030\001 \001(\r\022\020\n\010node_msg\030\002 \001(\t*@\n\tcomman"
+    "dID\022\n\n\006UPDATE\020\000\022\007\n\003RUN\020\001\022\n\n\006RESULT\020\002\022\010\n\004"
+    "PUSH\020\003\022\010\n\004LIST\020\004b\006proto3", 824);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lkpProto.proto", &protobuf_RegisterTypes);
   Command::default_instance_ = new Command();
@@ -2137,6 +2138,7 @@ void HeartBeat::clear_status() {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int PushACK::kStatusFieldNumber;
 const int PushACK::kAckMessageFieldNumber;
+const int PushACK::kNodeIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 PushACK::PushACK()
@@ -2163,6 +2165,7 @@ void PushACK::SharedCtor() {
   _cached_size_ = 0;
   status_ = false;
   ack_message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  node_id_ = 0u;
 }
 
 PushACK::~PushACK() {
@@ -2203,8 +2206,28 @@ PushACK* PushACK::New(::google::protobuf::Arena* arena) const {
 
 void PushACK::Clear() {
 // @@protoc_insertion_point(message_clear_start:lkpMessage.PushACK)
-  status_ = false;
+#if defined(__clang__)
+#define ZR_HELPER_(f) \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Winvalid-offsetof\"") \
+  __builtin_offsetof(PushACK, f) \
+  _Pragma("clang diagnostic pop")
+#else
+#define ZR_HELPER_(f) reinterpret_cast<char*>(\
+  &reinterpret_cast<PushACK*>(16)->f)
+#endif
+
+#define ZR_(first, last) do {\
+  ::memset(&first, 0,\
+           ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
+} while (0)
+
+  ZR_(status_, node_id_);
   ack_message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+
+#undef ZR_HELPER_
+#undef ZR_
+
 }
 
 bool PushACK::MergePartialFromCodedStream(
@@ -2241,6 +2264,21 @@ bool PushACK::MergePartialFromCodedStream(
             this->ack_message().data(), this->ack_message().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
             "lkpMessage.PushACK.ack_message"));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(24)) goto parse_node_id;
+        break;
+      }
+
+      // optional uint32 node_id = 3;
+      case 3: {
+        if (tag == 24) {
+         parse_node_id:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &node_id_)));
+
         } else {
           goto handle_unusual;
         }
@@ -2287,6 +2325,11 @@ void PushACK::SerializeWithCachedSizes(
       2, this->ack_message(), output);
   }
 
+  // optional uint32 node_id = 3;
+  if (this->node_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->node_id(), output);
+  }
+
   // @@protoc_insertion_point(serialize_end:lkpMessage.PushACK)
 }
 
@@ -2309,6 +2352,11 @@ void PushACK::SerializeWithCachedSizes(
         2, this->ack_message(), target);
   }
 
+  // optional uint32 node_id = 3;
+  if (this->node_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->node_id(), target);
+  }
+
   // @@protoc_insertion_point(serialize_to_array_end:lkpMessage.PushACK)
   return target;
 }
@@ -2327,6 +2375,13 @@ int PushACK::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->ack_message());
+  }
+
+  // optional uint32 node_id = 3;
+  if (this->node_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->node_id());
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -2364,6 +2419,9 @@ void PushACK::MergeFrom(const PushACK& from) {
 
     ack_message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ack_message_);
   }
+  if (from.node_id() != 0) {
+    set_node_id(from.node_id());
+  }
 }
 
 void PushACK::CopyFrom(const ::google::protobuf::Message& from) {
@@ -2392,6 +2450,7 @@ void PushACK::Swap(PushACK* other) {
 void PushACK::InternalSwap(PushACK* other) {
   std::swap(status_, other->status_);
   ack_message_.Swap(&other->ack_message_);
+  std::swap(node_id_, other->node_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -2463,6 +2522,20 @@ void PushACK::clear_ack_message() {
   }
   ack_message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ack_message);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.PushACK.ack_message)
+}
+
+// optional uint32 node_id = 3;
+void PushACK::clear_node_id() {
+  node_id_ = 0u;
+}
+ ::google::protobuf::uint32 PushACK::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.PushACK.node_id)
+  return node_id_;
+}
+ void PushACK::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.PushACK.node_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

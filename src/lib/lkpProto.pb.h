@@ -630,6 +630,12 @@ class PushACK : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::std::string* release_ack_message();
   void set_allocated_ack_message(::std::string* ack_message);
 
+  // optional uint32 node_id = 3;
+  void clear_node_id();
+  static const int kNodeIdFieldNumber = 3;
+  ::google::protobuf::uint32 node_id() const;
+  void set_node_id(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:lkpMessage.PushACK)
  private:
 
@@ -637,6 +643,7 @@ class PushACK : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   bool _is_default_instance_;
   ::google::protobuf::internal::ArenaStringPtr ack_message_;
   bool status_;
+  ::google::protobuf::uint32 node_id_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_lkpProto_2eproto();
   friend void protobuf_AssignDesc_lkpProto_2eproto();
@@ -1274,6 +1281,20 @@ inline void PushACK::set_allocated_ack_message(::std::string* ack_message) {
   }
   ack_message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ack_message);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.PushACK.ack_message)
+}
+
+// optional uint32 node_id = 3;
+inline void PushACK::clear_node_id() {
+  node_id_ = 0u;
+}
+inline ::google::protobuf::uint32 PushACK::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.PushACK.node_id)
+  return node_id_;
+}
+inline void PushACK::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.PushACK.node_id)
 }
 
 // -------------------------------------------------------------------

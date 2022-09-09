@@ -172,29 +172,43 @@ private:
     }
 
 
-    int i = 0;
     //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
     void onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr& message, Timestamp time)
     {
-        i++;
-
         //文件发送结束
         if (message->file_type() == lkpMessage::File::END)
         {
-            printf("i:%d\n",i);
+            ::fclose(fp_);//必须关闭，不然会错误
             
             //获取文件的大小
             struct stat statbuf;
             stat(fileName_.c_str(), &statbuf);
             int recvSize = statbuf.st_size;
+
             //检查文件是否完整
             if(recvSize != fileSize_){
                 printf("recvSize:%d,fileSize_:%d\n",recvSize,fileSize_);
                 printf("file is not complete!\n");
+                
+                //失败回复 
+                lkpMessage::PushACK ack;
+                ack.set_status(false);
+                ack.set_ack_message("push recv fail");
+                ack.set_node_id(nodeID_);
+                SendToServer(ack);
+                return;
             }
+            else{
+                printf("recv a complete file\n");
 
-            ::fclose(fp_);
-            return;
+                //成功
+                lkpMessage::PushACK ack;
+                ack.set_status(true);
+                ack.set_ack_message("push recv success");
+                ack.set_node_id(nodeID_);
+                SendToServer(ack);
+                return;
+            }
         }
         //第一次接收
         else if (message->first_patch())
@@ -207,7 +221,6 @@ private:
             fp_ = ::fopen(fileName_.c_str(), "we");
             assert(fp_);
         }
-
 
         //每次接收的都输出
         fwrite(message->content().c_str(), 1, message->patch_len(), fp_);

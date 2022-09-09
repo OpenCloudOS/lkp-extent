@@ -146,12 +146,18 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 //收到命令的回调函数，server转发给client， client执行。并且回复命令行
 void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr &message, Timestamp time)
 {
+    clientNum_ = clientOKNum_ = ackTimes_ = 0;
+    Return_.Clear();
+
+    //解析命令行的命令
     lkpMessage::commandID myCommand = message->command();
     string myCommandString;
     lkpEnumToCmds(myCommand, myCommandString);
     printf("Recv a command: %s\n", myCommandString.c_str());
     lkpMessage::Return ReturnToSend;//返回给命令行的回复
     ReturnToSend.set_command(myCommand);
+
+
 
     if (myCommand == lkpMessage::LIST)
     {
@@ -183,6 +189,8 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         
         //单播
         if(!message->send_to_all()){
+            clientNum_ = 1;
+
             FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
             if (!fp)
             {
@@ -198,8 +206,6 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
             char buf[kBufSize_];
             size_t nread = ::fread(buf, 1, sizeof buf, fp); //读取kBufSize的内容
 
-            conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
-
             lkpMessage::File fileMessage;
             fileMessage.set_file_type(lkpMessage::File::TESTCASE);
             fileMessage.set_file_name(std::to_string(nodeID));
@@ -208,10 +214,13 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
             fileMessage.set_first_patch(true);
             fileMessage.set_content(buf);
 
+            conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
             SendToClient(fileMessage,conn);
         }
         //广播
         else{
+            clientNum_ = clientPool_.size();
+
             //对所有节点作一次单播
             for(auto it:clientPool_.connections_){
                 FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
@@ -229,8 +238,6 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
                 char buf[kBufSize_];
                 size_t nread = ::fread(buf, 1, sizeof buf, fp); //读取kBufSize的内容
 
-                conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
-
                 lkpMessage::File fileMessage;
                 fileMessage.set_file_type(lkpMessage::File::TESTCASE);
                 fileMessage.set_file_name(std::to_string(nodeID));
@@ -239,6 +246,7 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
                 fileMessage.set_first_patch(true);
                 fileMessage.set_content(buf);
 
+                conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete,this,boost::placeholders::_1));//发完一次后继续发
                 SendToClient(fileMessage, conn);
             }
         }
@@ -255,11 +263,10 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         }
     }
 }
-int i = 1;
+
+//每次发送64kb
 void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 {
-    i++;
-
     FilePtr &fp = fpMap[conn];
 
     char buf[kBufSize_];
@@ -287,8 +294,6 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 
         SendToClient(fileMessage,conn);
 
-        printf("i:%d\n",i);
-
         printf("push testcase to client end!\n");
     }
 }
@@ -296,15 +301,32 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 //收到pushack的回调函数，应该开始发testecase的文件内容
 void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr &message, Timestamp time)
 {
-    printf("recv a CommandACK, status is %d", message->status());
     //TODO
+    printf("ack_message is:%s\n", message->ack_message().c_str());
+
+    lkpMessage::Return::NodeInfo *NodeInfoPtr = Return_.add_node_info();
+    NodeInfoPtr->set_node_id(message->node_id());
+    NodeInfoPtr->set_node_msg(message->ack_message());
+
+    ackTimes_++;
+    if(message->status()){
+        clientOKNum_++;
+    }
+
+    //回复给命令行
+    if(ackTimes_ == clientNum_){
+        Return_.set_command(lkpMessage::commandID::PUSH);
+        Return_.set_client_num(clientNum_);
+        Return_.set_client_ok_num(clientOKNum_);
+        SendToCmdClient(Return_);
+    }
 }
 
 //收到command ACK的回调函数，应该使统计数量++
 void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr &message, Timestamp time)
 {
-    printf("recv a CommandACK, status is %d", message->status());
     //TODO
+
 }
 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase
