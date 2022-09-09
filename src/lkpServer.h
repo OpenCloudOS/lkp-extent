@@ -155,9 +155,6 @@ private:
     int clientOKNum_;
     int ackTimes_;
 
-    //push ack
-    lkpMessage::Return Return_;
-
     //time wheeling使用
     typedef std::weak_ptr<muduo::net::TcpConnection>WeakTcpConnectionPtr;
     //Entry的引用计数变成0时，关闭Entry对应客户端的连接

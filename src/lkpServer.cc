@@ -223,7 +223,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
 void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr &message, Timestamp time)
 {
     clientNum_ = clientOKNum_ = ackTimes_ = 0;
-    Return_.Clear();
+    clientPool_.clear_info();
 
     //解析命令行的命令
     lkpMessage::commandID myCommand = message->command();
@@ -308,21 +308,31 @@ void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr &messa
     //TODO
     printf("ack_message is:%s\n", message->ack_message().c_str());
 
-    lkpMessage::Return::NodeInfo *NodeInfoPtr = Return_.add_node_info();
-    NodeInfoPtr->set_node_id(message->node_id());
-    NodeInfoPtr->set_node_msg(message->ack_message());
-
     ackTimes_++;
     if(message->status()){
         clientOKNum_++;
     }
 
+    //收到错误才回复给命令行
+    if(!message->status()){
+        clientPool_.update_info(message->node_id(),message->ack_message());
+    }
+
     //回复给命令行
     if(ackTimes_ == clientNum_){
-        Return_.set_command(lkpMessage::commandID::PUSH);
-        Return_.set_client_num(clientNum_);
-        Return_.set_client_ok_num(clientOKNum_);
-        SendToCmdClient(Return_);
+        lkpMessage::Return Return;
+        Return.set_command(lkpMessage::commandID::PUSH);
+        Return.set_client_num(clientNum_);
+        Return.set_client_ok_num(clientOKNum_);
+
+        //出错的节点记录在info
+        for (auto it = clientPool_.node_info.begin(); it != clientPool_.node_info.end(); ++it){
+            lkpMessage::Return::NodeInfo *NodeInfoPtr = Return.add_node_info();
+            NodeInfoPtr->set_node_id(it->first);
+            NodeInfoPtr->set_node_msg(it->second);
+        }   
+
+        SendToCmdClient(Return);
     }
 }
 

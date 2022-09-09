@@ -99,3 +99,23 @@ TcpConnectionPtr lkpClientPool::getConn(int nodeID)
         return NULL;
     }
 }
+
+//清空信息
+void lkpClientPool::clear_info(){
+    node_info.clear();
+}
+
+//填充信息
+void lkpClientPool::update_info(int nodeID,string info){
+    node_info[nodeID] = info;
+}
+
+//获取节点的信息
+string lkpClientPool::get_info(int nodeID){
+    if(node_info.count(nodeID)){
+        return node_info[nodeID];
+    }
+    else{
+        return "";
+    }
+}

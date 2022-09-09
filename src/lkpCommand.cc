@@ -138,9 +138,10 @@ private:
                 break;
             case lkpMessage::PUSH:{
                 uint32_t clientNum = message->client_num();
+                uint32_t clientOKNum = message->client_ok_num();
                 printf("PUSH: %u clients have connected..\n", clientNum);
                 lkpMessage::Return::NodeInfo node;
-                for (int i = 0; i < clientNum; ++i)
+                for (int i = 0; i < clientNum - clientOKNum; ++i)
                 {
                     node = message->node_info(i);
                     printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());

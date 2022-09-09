@@ -35,12 +35,23 @@ public:
 
     //获取conn
     TcpConnectionPtr getConn(int nodeID);
+
+    //清空信息
+    void clear_info();
+
+    //填充信息
+    void update_info(int nodeID,string info);
+
+    //获取节点的信息
+    string get_info(int nodeID);
+
 private:
     //client pool nodeID -- cfd
     std::map<int, TcpConnectionPtr> connections_;
     int nodeCount_;
     std::set<int> idleNodeID;//存放当前闲置的nodeID
 
+    std::map<int, string> node_info;
 };
 
 #endif
