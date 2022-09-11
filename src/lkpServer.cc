@@ -1,9 +1,5 @@
 #include "lkpServer.h"
 
-const char *TCPSERVER = "CMD_SUN";
-const char *CMDIPC = "CMDIPC";
-const int LEN = 4096;
-
 lkpServer::lkpServer(EventLoop *loop,
                      const InetAddress &listenAddr, int numThreads, int idleSeconds,
                      off_t rollSize, int flushInterval)
@@ -219,36 +215,11 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
     }
 }
 
-void lkpServer::resultToClient(const RecvCommandPtr &message)
-{
-    //单播
-    if (!message->send_to_all())
-    {
-        clientNum_ = 1;
 
-        lkpMessage::Command result;
-        result.set_command(lkpMessage::commandID::RESULT);
-        result.set_testcase(message->testcase());
-        result.set_node_id(message->node_id());
-
-        TcpConnectionPtr conn = clientPool_.getConn(message->node_id());
-        SendToClient(result, conn);
-    }
-    //广播
-    else
-    {   
-        clientNum_ = clientPool_.size();
-
-        //对所有节点作一次单播
-        for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it){
-            TcpConnectionPtr conn = it->second;
-
-            lkpMessage::Command result;
-            result.set_command(lkpMessage::commandID::RESULT);
-            result.set_testcase(message->testcase());
-            result.set_node_id(it->first);
-            SendToClient(result, conn);
-        }
+void  lkpServer::BroadToClients(lkpMessage::Command message){
+    for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it){
+        message.set_node_id(it->first);
+        SendToClient(message, it->second);
     }
 }
 
@@ -264,35 +235,44 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     lkpEnumToCmds(myCommand, myCommandString);
     printf("Recv a command: %s\n", myCommandString.c_str());
     
-    if (myCommand == lkpMessage::LIST)
-    {
-        lkpMessage::Return ReturnToSend;//返回给命令行的回复
-        ReturnToSend.set_command(myCommand);
-        ReturnToSend.set_client_num(clientPool_.size());
-        ReturnToSend.set_client_ok_num(clientPool_.size());
-
-        //所有在线客户端的信息
-        lkpMessage::Return::NodeInfo *NodeInfoPtr;
-        for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it)
-        {
-            NodeInfoPtr = ReturnToSend.add_node_info();
-            NodeInfoPtr->set_node_id(it->first);
-            NodeInfoPtr->set_node_msg(it->second->peerAddress().toIp());
+    switch(myCommand){
+        case lkpMessage::UPDATE:
+        case lkpMessage::RUN:
+        case lkpMessage::RESULT:{
+            if (!message->send_to_all() && message->node_id()>=0){
+                SendToClient(*message, clientPool_.getConn(message->node_id()));
+                clientNum_ = 1;
+            }
+            else{    
+                BroadToClients(*message);
+                clientNum_ = clientPool_.size();
+            }
+            break;
         }
+        case lkpMessage::PUSH:{
+            pushToClient(message);
+        }
+        case lkpMessage::LIST:{
+            lkpMessage::Return ReturnToSend;//返回给命令行的回复
+            ReturnToSend.set_command(myCommand);
+            ReturnToSend.set_client_num(clientPool_.size());
+            ReturnToSend.set_client_ok_num(clientPool_.size());
 
-        //回复给命令行
-        SendToCmdClient(ReturnToSend);
+            //所有在线客户端的信息
+            lkpMessage::Return::NodeInfo *NodeInfoPtr;
+            for (auto it = clientPool_.connections_.begin(); it != clientPool_.connections_.end(); ++it)
+            {
+                NodeInfoPtr = ReturnToSend.add_node_info();
+                NodeInfoPtr->set_node_id(it->first);
+                NodeInfoPtr->set_node_msg(it->second->peerAddress().toIp());
+            }
+
+            //回复给命令行
+            SendToCmdClient(ReturnToSend);
+            break;
+        }
     }
-    //lkp push
-    else if (myCommand == lkpMessage::PUSH)
-    {
-        pushToClient(message);
-    }
-    //lkp result
-    else if (myCommand == lkpMessage::RESULT)
-    {
-        resultToClient(message);
-    }
+
 }
 
 //每次发送64kb
@@ -333,8 +313,6 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 //收到pushack的回调函数，应该开始发testecase的文件内容
 void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr &message, Timestamp time)
 {
-    //TODO
-    printf("ack_message is:%s\n", message->ack_message().c_str());
 
     ackTimes_++;
     if(message->status()){
@@ -367,8 +345,32 @@ void lkpServer ::onPushACK(const TcpConnectionPtr &conn, const PushACKPtr &messa
 //收到command ACK的回调函数，应该使统计数量++
 void lkpServer ::onCommandACK(const TcpConnectionPtr &conn, const CommandACKPtr &message, Timestamp time)
 {
-    //TODO
+    ackTimes_++;
+    if(message->status()){
+        clientOKNum_++;
+    }
 
+    //收到错误才回复给命令行
+    if(!message->status()){
+        clientPool_.update_info(message->node_id(),message->ack_message());
+    }
+
+    //回复给命令行
+    if(ackTimes_ == clientNum_){
+        lkpMessage::Return Return;
+        Return.set_command(message->command());
+        Return.set_client_num(clientNum_);
+        Return.set_client_ok_num(clientOKNum_);
+
+        //出错的节点记录在info
+        for (auto it = clientPool_.node_info.begin(); it != clientPool_.node_info.end(); ++it){
+            lkpMessage::Return::NodeInfo *NodeInfoPtr = Return.add_node_info();
+            NodeInfoPtr->set_node_id(it->first);
+            NodeInfoPtr->set_node_msg(it->second);
+        }   
+
+        SendToCmdClient(Return);
+    }
 }
 
 //收到file message的回调函数，server收到的应该是result， client收到的应该是testcase

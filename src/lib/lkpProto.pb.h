@@ -460,6 +460,12 @@ class CommandACK : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::std::string* release_ack_message();
   void set_allocated_ack_message(::std::string* ack_message);
 
+  // optional uint32 node_id = 4;
+  void clear_node_id();
+  static const int kNodeIdFieldNumber = 4;
+  ::google::protobuf::uint32 node_id() const;
+  void set_node_id(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:lkpMessage.CommandACK)
  private:
 
@@ -468,6 +474,7 @@ class CommandACK : public ::google::protobuf::Message /* @@protoc_insertion_poin
   bool status_;
   int command_;
   ::google::protobuf::internal::ArenaStringPtr ack_message_;
+  ::google::protobuf::uint32 node_id_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_lkpProto_2eproto();
   friend void protobuf_AssignDesc_lkpProto_2eproto();
@@ -1222,6 +1229,20 @@ inline void CommandACK::set_allocated_ack_message(::std::string* ack_message) {
   }
   ack_message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ack_message);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.CommandACK.ack_message)
+}
+
+// optional uint32 node_id = 4;
+inline void CommandACK::clear_node_id() {
+  node_id_ = 0u;
+}
+inline ::google::protobuf::uint32 CommandACK::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.CommandACK.node_id)
+  return node_id_;
+}
+inline void CommandACK::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.CommandACK.node_id)
 }
 
 // -------------------------------------------------------------------

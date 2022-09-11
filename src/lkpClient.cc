@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <thread>
 #include <set>
 #include <atomic>
@@ -47,6 +48,7 @@
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
 #include "lib/lkpDispatcher.h"
+#include "lkpHelper.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -122,21 +124,53 @@ private:
     //收到命令的回调函数，server转发给client， client执行
     void onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr& message, Timestamp time)
     {   
-        //需要回复的ACK
+        lkpMessage::CommandACK ACK;
+        ACK.set_command(message->command());
+        ACK.set_node_id(message->node_id());
+        int status = 0;
+
+        //如果上一个命令还没有运行完
+        if(lastPid_>0 && waitpid(lastPid_, &status, WNOHANG)==0){
+            ACK.set_status(false);
+            ACK.set_ack_message("ERROR 10: Command " + lastCmdString_ + " is still ruunning!");
+            SendToServer(ACK);
+            return;
+        }
+
+        lkpEnumToCmds(message->command(), lastCmdString_);
+
         switch(message->command()){
-            case lkpMessage::commandID::UPDATE:{
-                //To DO:
-                //sh: lkp-ctl update
-                lkpMessage::CommandACK ACK;
-                ACK.set_command(message->command());
-                ACK.set_status(true);
-                SendToServer(ACK);
+
+            case lkpMessage::UPDATE:{
+                pid_t pid = fork();
+                if(pid<0){
+                    ACK.set_status(false);
+                    ACK.set_ack_message("ERROR 11: Fork Error!");
+                    SendToServer(ACK);
+                    return;
+                }
+                //开启新进程执行命令
+                if(pid==0){
+                    if(execlp("lkp-ctl", "lkp-ctl", "update", NULL)<0){
+                        perror("Error on UPDATE exec:");
+                        exit(0);
+                    }
+                }
+                else{
+                    lastPid_ = pid;
+                    if(waitpid(pid, &status, 0)==-1){
+                        ACK.set_status(false);
+                        ACK.set_ack_message("ERROR 12: Command UPDATE cannot run!");
+                        SendToServer(ACK);
+                    }
+                    else{
+                        ACK.set_status(true);
+                        SendToServer(ACK);
+                    }
+                }
                 break;
             }    
-            case lkpMessage::commandID::RUN:{
-                
-                lkpMessage::CommandACK ACK;
-                ACK.set_command(message->command());
+            case lkpMessage::RUN:{
                 string testname = message->testcase();
                 if(message->docker_num()){
                     //To DO:
@@ -150,18 +184,15 @@ private:
                 SendToServer(ACK);
                 break;
             }
-            case lkpMessage::commandID::RESULT:{
-                lkpMessage::CommandACK ACK;
-                ACK.set_command(message->command());
-                //To DO:
-                //send result to Server
-                onResult(conn,message);
 
+            case lkpMessage::RESULT:{
+                onResult(conn,message);
                 ACK.set_status(true);
                 SendToServer(ACK);
                 break;
             }
-            case lkpMessage::commandID::PUSH:{
+
+            case lkpMessage::PUSH:{
                 lkpMessage::PushACK PACK;
                 //To DO:
                 //bool canRecvFile(uint32 file_len);
@@ -309,6 +340,7 @@ private:
         lkpMessage::HeartBeat heart;
         heart.set_status(true);
         SendToServer(heart);
+        //TODO : Check if lastPid_ is end. 
     }
 
     //向服务器发送数据
@@ -337,17 +369,19 @@ private:
     int nodeID_;
     FILE *fp_;
     int kBufSize_;
+    pid_t lastPid_;
+    string lastCmdString_;
 };
 
 int main(int argc, char *argv[])
 {
     uint16_t port = 7777;
     int seconds = 3;
-    string ip = "192.168.80.128";
+    string ip = "114.212.125.145";
 
     if (argc != 3)
     {
-        printf("请输入：1.端口号 2.发送OK的间隔 注意：修改ip为自己的网卡地址！！！！！！！！！！！！\n");
+        printf("请输入：1.端口号 2.发送OK的间隔 \n");
     }
     else {
         ip = argv[1];

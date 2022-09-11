@@ -44,6 +44,7 @@ message CommandACK {
     bool status = 1;     
     commandID command = 2;   //Return for check
     string ack_message = 3;  //Error message, etc.
+    uint32 node_id = 4;
 }
 
 // Clinets should send HearBeat to maintain the connection
