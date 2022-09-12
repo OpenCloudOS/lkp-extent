@@ -6,6 +6,11 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 2. 增加LKP对容器环境的测试
 3. 增加ebpf测试内核的用例
 
+## 进展
+**此分支已完成一个基于muduo的多线程服务器，lkp-server可以远程控制连接上的lkp-node执行lkp测试。已测试支持命令如下一小节所示。源代码存储在/src中。**
+
+**项目正在完善lkp-extent.config\makefile\init.sh等部分...**
+
 ## 远程管理
 #### 介绍
 我们知道在测试系统稳定性的时候，对不同类型的服务器进行大批量暴力测试，才能更容易说明问题。但是原生态的[LKP](https://github.com/intel/lkp-tests "LKP")套件主要是用于在单台Linux服务器上测试系统的稳定性，如果需要部署多台不同类型的服务器进行同时测试，则需要手动登录每一台服务器进行设置。因此lkp-extent主要用于扩展[LKP](https://github.com/intel/lkp-tests "LKP")功能，解决其在这方面的不足，设计出一个 一对多点的运作模式。
@@ -57,9 +62,6 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
     `$ lkp-ctl result -i nodeid ` # 收集指定的测试机的测试结果
 
 虽然lkp-extent是[LKP](https://github.com/intel/lkp-tests "LKP")的一个扩展功能，但是该repo并不会对[LKP](https://github.com/intel/lkp-tests "LKP")工程本身进行修改，他可以在最大的程度上使用最新的[LKP](https://github.com/intel/lkp-tests "LKP")，而lkp-extent上面新增的测试case也只会以overlay的方式叠加到原生态的LKP工程上。
-
-#### 进展
-此分支已完成一个基于muduo的多线程服务器，lkp-server可以远程控制连接上的lkp-node执行lkp测试。项目正在完善中...
 
 ## 容器测试
 #### 介绍
