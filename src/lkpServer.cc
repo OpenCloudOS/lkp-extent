@@ -83,7 +83,7 @@ void lkpServer ::start()
     running_ = true; //允许后端写日志
     thread_.start(); //启动后端线程threadFunc
     latch_.wait();   //等待后端线程threadFunc启动，否则服务器不能执行其他动作
-}
+} 
 
 //向客户端发送数据
 void lkpServer ::SendToClient(const google::protobuf::Message &message, const TcpConnectionPtr& conn)
