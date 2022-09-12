@@ -6,7 +6,6 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 2. 增加LKP对容器环境的测试
 3. 增加ebpf测试内核的用例
 
-代码：https://github.com/OpenCloudOS/lkp-tests
 ## 远程管理
 #### 介绍
 我们知道在测试系统稳定性的时候，对不同类型的服务器进行大批量暴力测试，才能更容易说明问题。但是原生态的[LKP](https://github.com/intel/lkp-tests "LKP")套件主要是用于在单台Linux服务器上测试系统的稳定性，如果需要部署多台不同类型的服务器进行同时测试，则需要手动登录每一台服务器进行设置。因此lkp-extent主要用于扩展[LKP](https://github.com/intel/lkp-tests "LKP")功能，解决其在这方面的不足，设计出一个 一对多点的运作模式。
@@ -19,7 +18,9 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
           |                 |                |                |                   |
        lkp-node         lkp-node           .....           lkp-node           lkp-node
 
-如图，首先我们将一台服务器称为node，而lkp-extent则需要存在一个server node和若干个client node。server node会进入监听模式，client node会根据自身的服务器配置相继接入对应的server node。这样server node上面，就可以对client node进行全方位的操作，下面简单例举几个常见的指令，
+如图，首先我们将一台服务器称为node，而lkp-extent则需要存在一个server node和若干个client node。server node会进入监听模式，client node会根据自身的服务器配置相继接入对应的server node。这样server node上面，就可以对client node进行全方位的操作.
+
+#### 使用方法
  1.  查看有哪些待测服务器
 
       `$ lkp-ctl list` # 返回client-node的nodeid，arch类型和内存等信息
@@ -28,42 +29,37 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 
     `$ lkp-ctl update` # 更新本机的测试组件，包括lkp-extent和lkp两个repo
 
-    `$ lkp-ctl update all` # 更新所有node的测试组件
+    `$ lkp-ctl update -a` # 更新所有node的测试组件
 
     `$ lkp-ctl update -i nodeid` #更新id号是nodeid的node的测试组件
 
  3. 下发测试指令
 
-    `$ lkp-ctl run testcase` # 所有node都执行testcase
+    `$ lkp-ctl run testcase` # 本机执行testcase
+    
+    `$ lkp-ctl run testcase -a ` # 所有远程node执行testcase
 
-    `$ lkp-ctl -i nodeid run testcase` # id是nodeid的服务器执行testcase
+    `$ lkp-ctl run testcase -i nodeid ` # id是nodeid的服务器执行testcase
 
-    `$ lkp-ctl -i nodeid -c containerCount run testcase` # id是nodeid的服务器开containerCount个容器，并在容器里面执行testcase
+    `$ lkp-ctl run testcase -i nodeid -c containerCount` # id是nodeid的服务器开containerCount个容器，并在容器里面执行testcase
 
- 4. 下发测试集
 
-    `$ lkp-ctl run testcluster` # testcluster是一堆testcase的组合，用于进行多组合测试
+ 4. 推送自定义测试case
 
-    `$ lkp-ctl -i nodeid run testcluster` # 对指定测试机进行组合测试
+    `$ lkp-ctl push testscript -a` # 向所有测试机推送名字为testscript的脚本
 
-    `$ lkp-ctl -i nodeid -c contaierCount run testcluster` # 对指定测试机进行容器内的组合测试
+    `$ lkp-ctl push testscript -i nodeid ` # 向指定测试机推送名字为testscript的脚本
 
- 5. 推送自定义测试case
+ 5. 收集测试结果
 
-    `$ lkp-ctl push testscript` # 向所有测试机推送名字为testscript的脚本
+    `$ lkp-ctl result -a` # 收集所有测试机的测试结果
 
-    `$ lkp-ctl -i nodeid push testscript` # 向指定测试机推送名字为testscript的脚本
-
- 6. 收集测试结果
-
-    `$ lkp-ctl result` # 收集所有测试机的测试结果
-
-    `$ lkp-ctl -i nodeid result` # 收集指定的测试机的测试结果
+    `$ lkp-ctl result -i nodeid ` # 收集指定的测试机的测试结果
 
 虽然lkp-extent是[LKP](https://github.com/intel/lkp-tests "LKP")的一个扩展功能，但是该repo并不会对[LKP](https://github.com/intel/lkp-tests "LKP")工程本身进行修改，他可以在最大的程度上使用最新的[LKP](https://github.com/intel/lkp-tests "LKP")，而lkp-extent上面新增的测试case也只会以overlay的方式叠加到原生态的LKP工程上。
 
 #### 进展
-正在研发中......
+此分支已完成一个基于muduo的多线程服务器，lkp-server可以远程控制连接上的lkp-node执行lkp测试。项目正在完善中...
 
 ## 容器测试
 #### 介绍
