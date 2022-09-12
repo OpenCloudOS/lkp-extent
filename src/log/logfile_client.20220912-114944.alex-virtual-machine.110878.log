@@ -1,3 +1,0 @@
-20220912 11:49:44.023956Z 110878 INFO  TcpClient::connect[lkpClient] - connecting to 192.168.80.128:7777 - TcpClient.cc:107
-20220912 11:49:46.254867Z 110878 INFO  fileName_:./testcase/node0/client_testcase - lkpClient.cc:416
-20220912 11:49:46.255102Z 110878 INFO  recv a complete file - lkpClient.cc:399

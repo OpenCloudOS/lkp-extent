@@ -35,6 +35,12 @@ lkpServer::lkpServer(EventLoop *loop,
       basename_("./log/logfile")//缓冲区的文件名称
 
 {
+    //缓冲区使用
+    muduo::Logger::setOutput(asyncOutput); //LOG_INFO调用asyncOutput
+    currentBuffer_->bzero();
+    nextBuffer_->bzero();
+    buffers_.reserve(16);
+
     //绑定业务lkpMessage::xxxxx的回调函数，lkpMessage::Command等在.proto文件中
     dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg,
                                                                     this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -63,12 +69,6 @@ lkpServer::lkpServer(EventLoop *loop,
 
     //设置IO线程的数量
     server_.setThreadNum(numThreads_);
-
-    //缓冲区使用
-    muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
-    currentBuffer_->bzero();
-    nextBuffer_->bzero();
-    buffers_.reserve(16);
 }
 
 //启动服务器
