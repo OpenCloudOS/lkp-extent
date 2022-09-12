@@ -204,8 +204,6 @@ int main(int argc, char *argv[])
                    argv[1]);
         }
 
-        //TODO: should check if testcase name is valid
-
         //Testcase
         commandToSend.set_testcase(string(argv[2]));
 

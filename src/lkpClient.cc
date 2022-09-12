@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <errno.h>
 #include <unistd.h>
@@ -170,18 +171,46 @@ private:
                 }
                 break;
             }    
+
             case lkpMessage::RUN:{
-                string testname = message->testcase();
+                char* testname = (char*)(message->testcase().data());
+                char* runArgv[] = {"lkp-ctl", "run" , testname};
+                unsigned int dockerNum = message->docker_num();
                 if(message->docker_num()){
-                    //To DO:
-                    // sh: lkp-ctl run $testname -c $dockernum
+                    runArgv[3] = "-c ";
+                    char dockerNumChar[20];
+                    sprintf(dockerNumChar, "%u", message->docker_num());
+                    runArgv[4] = dockerNumChar;
+                    runArgv[5] = NULL;
+                }
+                runArgv[3] = NULL;
+
+                pid_t pid;
+                if(pid<0){
+                    ACK.set_status(false);
+                    ACK.set_ack_message("ERROR 11: Fork Error!");
+                    SendToServer(ACK);
+                    return;
+                }
+                //开启新进程执行命令
+                if(pid==0){
+                    if(execvp("lkp-ctl", runArgv)<0){
+                        perror("Error on RUN exec:");
+                        exit(0);
+                    }
                 }
                 else{
-                    //To DO:
-                    // sh: lkp-ctl run $testname
+                    lastPid_ = pid;
+                    if(waitpid(pid, &status, WNOHANG)==-1){
+                        ACK.set_status(false);
+                        ACK.set_ack_message("ERROR 12: Command RUN cannot run!");
+                        SendToServer(ACK);
+                    }
+                    else{
+                        ACK.set_status(true);
+                        SendToServer(ACK);
+                    }
                 }
-                ACK.set_status(true);
-                SendToServer(ACK);
                 break;
             }
 
