@@ -91,7 +91,7 @@ void lkpServer ::SendToClient(const google::protobuf::Message &message, const Tc
     if (conn && conn->connected())
     {
         codec_.send(conn, message);
-    } 
+    }  
     else{
         // printf("No such client!\n");
         LOG_INFO<<"No such client!";
