@@ -1,7 +1,10 @@
 #include <vector>
 #include <string>
+#include <fstream>
+#include <iostream>
 
 #include "lkpHelper.h"
+
 
 using namespace std;
 
@@ -118,4 +121,105 @@ string lkpClientPool::get_info(int nodeID){
     else{
         return "";
     }
+}
+
+
+//读取配置文件
+
+//判断是否是空格
+bool IsSpace(char c)
+{
+	if (' ' == c || '\t' == c)
+		return true;
+	return false;
+}
+
+//判断是否是注释
+bool IsCommentChar(char c)
+{
+	if (c == COMMENT_CHAR){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+void Trim(string & str)
+{
+	if (str.empty()) {
+		return;
+	}
+	int i, start_pos, end_pos;
+	for (i = 0; i < str.size(); ++i) {
+		if (!IsSpace(str[i])) {
+			break;
+		}
+	}
+	if (i == str.size()) { // 全部是空白字符串
+		str = "";
+		return;
+	}
+	start_pos = i;
+	for (i = str.size() - 1; i >= 0; --i) {
+		if (!IsSpace(str[i])) {
+			break;
+		}
+	}
+	end_pos = i;
+	str = str.substr(start_pos, end_pos - start_pos + 1);
+}
+
+//分析一行语句
+bool AnalyseLine(const string & line, string & key, string & value)
+{
+	if (line.empty())
+		return false;
+	int start_pos = 0, end_pos = line.size() - 1, pos;
+	if ((pos = line.find(COMMENT_CHAR)) != -1) {
+		if (0 == pos) {  // 行的第一个字符就是注释字符
+			return false;
+		}
+		end_pos = pos - 1;
+	}
+	string new_line = line.substr(start_pos, start_pos + 1 - end_pos);  // 预处理，删除注释部分
+
+	if ((pos = new_line.find('=')) == -1)
+		return false;  // 没有=号
+
+	key = new_line.substr(0, pos);
+	value = new_line.substr(pos + 1, end_pos + 1- (pos + 1));
+
+	Trim(key);
+	if (key.empty()) {
+		return false;
+	}
+	Trim(value);
+	return true;
+}
+
+bool ReadConfig(const string & filename, map<string, string> & m)
+{
+	m.clear();
+	ifstream infile(filename.c_str());
+	if (!infile) {
+		cout << "lkp-ctl init failed: Config File open error!" << endl;
+		return false;
+	}
+	string line, key, value;
+	while (getline(infile, line)) {
+		if (AnalyseLine(line, key, value)) {
+			m[key] = value;
+		}
+	}
+	infile.close();
+	return true;
+}
+
+// 打印读取出来的数据
+void PrintConfig(const map<string, string> & m)
+{
+	map<string, string>::const_iterator mite = m.begin();
+	for (; mite != m.end(); ++mite) {
+		cout << mite->first << "=" << mite->second << endl;
+	}
 }

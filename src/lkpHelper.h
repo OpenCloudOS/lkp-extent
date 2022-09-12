@@ -1,7 +1,10 @@
 #ifndef LKP_HELPER
 #define LKP_HELPER
 
+#define COMMENT_CHAR '#'
 
+#include <string>
+#include <map>
 #include "muduo/net/Buffer.h"
 #include "muduo/net/TcpConnection.h"
 #include "lib/lkpProto.pb.h"
@@ -16,6 +19,11 @@ extern std::vector<string> lkpCommands;
 bool lkpCmdsToEnum(const string& lkpCmdString, lkpMessage::commandID& lkpEnum);
 //将lkpMessage::commandID中的enum转换为字符串
 bool lkpEnumToCmds(const lkpMessage::commandID lkpEnum, string& lkpCmdString);
+
+//读取lkp-extend配置文件
+bool ReadConfig(const string & filename, std::map<string, string> & m);
+//打印配置文件到输出流
+void PrintConfig(const std::map<string, string> & m);
 
 
 class lkpClientPool : noncopyable

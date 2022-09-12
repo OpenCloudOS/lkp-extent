@@ -10,7 +10,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <thread>
-#include <set>
 #include <stdio.h>
 #include <unistd.h>
 #include <atomic>
@@ -19,7 +18,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
-#include <atomic>
 #include <boost/any.hpp>
 #include <boost/bind.hpp>
 #include <boost/noncopyable.hpp>
