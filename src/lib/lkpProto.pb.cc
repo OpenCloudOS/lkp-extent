@@ -98,10 +98,11 @@ void protobuf_AssignDesc_lkpProto_2eproto() {
       GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(File, _is_default_instance_));
   File_filetype_descriptor_ = File_descriptor_->enum_type(0);
   CommandACK_descriptor_ = file->message_type(2);
-  static const int CommandACK_offsets_[3] = {
+  static const int CommandACK_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CommandACK, status_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CommandACK, command_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CommandACK, ack_message_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CommandACK, node_id_),
   };
   CommandACK_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -246,19 +247,19 @@ void protobuf_AddDesc_lkpProto_2eproto() {
     "le_name\030\002 \001(\t\022\021\n\tpatch_len\030\003 \001(\r\022\021\n\tfile"
     "_size\030\004 \001(\r\022\023\n\013first_patch\030\005 \001(\010\022\017\n\007cont"
     "ent\030\006 \001(\014\022\017\n\007node_id\030\007 \001(\r\"-\n\010filetype\022\014"
-    "\n\010TESTCASE\020\000\022\n\n\006RESULT\020\001\022\007\n\003END\020\002\"Y\n\nCom"
+    "\n\010TESTCASE\020\000\022\n\n\006RESULT\020\001\022\007\n\003END\020\002\"j\n\nCom"
     "mandACK\022\016\n\006status\030\001 \001(\010\022&\n\007command\030\002 \001(\016"
     "2\025.lkpMessage.commandID\022\023\n\013ack_message\030\003"
-    " \001(\t\"\033\n\tHeartBeat\022\016\n\006status\030\001 \001(\010\"\?\n\007Pus"
-    "hACK\022\016\n\006status\030\001 \001(\010\022\023\n\013ack_message\030\002 \001("
-    "\t\022\017\n\007node_id\030\003 \001(\r\"\272\001\n\006Return\022\022\n\nclient_"
-    "num\030\001 \001(\r\022\025\n\rclient_ok_num\030\002 \001(\r\022&\n\007comm"
-    "and\030\003 \001(\0162\025.lkpMessage.commandID\022.\n\tnode"
-    "_info\030\004 \003(\0132\033.lkpMessage.Return.NodeInfo"
-    "\032-\n\010NodeInfo\022\017\n\007node_id\030\001 \001(\r\022\020\n\010node_ms"
-    "g\030\002 \001(\t*@\n\tcommandID\022\n\n\006UPDATE\020\000\022\007\n\003RUN\020"
-    "\001\022\n\n\006RESULT\020\002\022\010\n\004PUSH\020\003\022\010\n\004LIST\020\004b\006proto"
-    "3", 841);
+    " \001(\t\022\017\n\007node_id\030\004 \001(\r\"\033\n\tHeartBeat\022\016\n\006st"
+    "atus\030\001 \001(\010\"\?\n\007PushACK\022\016\n\006status\030\001 \001(\010\022\023\n"
+    "\013ack_message\030\002 \001(\t\022\017\n\007node_id\030\003 \001(\r\"\272\001\n\006"
+    "Return\022\022\n\nclient_num\030\001 \001(\r\022\025\n\rclient_ok_"
+    "num\030\002 \001(\r\022&\n\007command\030\003 \001(\0162\025.lkpMessage."
+    "commandID\022.\n\tnode_info\030\004 \003(\0132\033.lkpMessag"
+    "e.Return.NodeInfo\032-\n\010NodeInfo\022\017\n\007node_id"
+    "\030\001 \001(\r\022\020\n\010node_msg\030\002 \001(\t*@\n\tcommandID\022\n\n"
+    "\006UPDATE\020\000\022\007\n\003RUN\020\001\022\n\n\006RESULT\020\002\022\010\n\004PUSH\020\003"
+    "\022\010\n\004LIST\020\004b\006proto3", 858);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lkpProto.proto", &protobuf_RegisterTypes);
   Command::default_instance_ = new Command();
@@ -1549,6 +1550,7 @@ void File::clear_node_id() {
 const int CommandACK::kStatusFieldNumber;
 const int CommandACK::kCommandFieldNumber;
 const int CommandACK::kAckMessageFieldNumber;
+const int CommandACK::kNodeIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CommandACK::CommandACK()
@@ -1576,6 +1578,7 @@ void CommandACK::SharedCtor() {
   status_ = false;
   command_ = 0;
   ack_message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  node_id_ = 0u;
 }
 
 CommandACK::~CommandACK() {
@@ -1634,6 +1637,7 @@ void CommandACK::Clear() {
 
   ZR_(status_, command_);
   ack_message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  node_id_ = 0u;
 
 #undef ZR_HELPER_
 #undef ZR_
@@ -1693,6 +1697,21 @@ bool CommandACK::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(32)) goto parse_node_id;
+        break;
+      }
+
+      // optional uint32 node_id = 4;
+      case 4: {
+        if (tag == 32) {
+         parse_node_id:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &node_id_)));
+
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -1742,6 +1761,11 @@ void CommandACK::SerializeWithCachedSizes(
       3, this->ack_message(), output);
   }
 
+  // optional uint32 node_id = 4;
+  if (this->node_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->node_id(), output);
+  }
+
   // @@protoc_insertion_point(serialize_end:lkpMessage.CommandACK)
 }
 
@@ -1770,6 +1794,11 @@ void CommandACK::SerializeWithCachedSizes(
         3, this->ack_message(), target);
   }
 
+  // optional uint32 node_id = 4;
+  if (this->node_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->node_id(), target);
+  }
+
   // @@protoc_insertion_point(serialize_to_array_end:lkpMessage.CommandACK)
   return target;
 }
@@ -1794,6 +1823,13 @@ int CommandACK::ByteSize() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->ack_message());
+  }
+
+  // optional uint32 node_id = 4;
+  if (this->node_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->node_id());
   }
 
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -1834,6 +1870,9 @@ void CommandACK::MergeFrom(const CommandACK& from) {
 
     ack_message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ack_message_);
   }
+  if (from.node_id() != 0) {
+    set_node_id(from.node_id());
+  }
 }
 
 void CommandACK::CopyFrom(const ::google::protobuf::Message& from) {
@@ -1863,6 +1902,7 @@ void CommandACK::InternalSwap(CommandACK* other) {
   std::swap(status_, other->status_);
   std::swap(command_, other->command_);
   ack_message_.Swap(&other->ack_message_);
+  std::swap(node_id_, other->node_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
@@ -1948,6 +1988,20 @@ void CommandACK::clear_ack_message() {
   }
   ack_message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ack_message);
   // @@protoc_insertion_point(field_set_allocated:lkpMessage.CommandACK.ack_message)
+}
+
+// optional uint32 node_id = 4;
+void CommandACK::clear_node_id() {
+  node_id_ = 0u;
+}
+ ::google::protobuf::uint32 CommandACK::node_id() const {
+  // @@protoc_insertion_point(field_get:lkpMessage.CommandACK.node_id)
+  return node_id_;
+}
+ void CommandACK::set_node_id(::google::protobuf::uint32 value) {
+  
+  node_id_ = value;
+  // @@protoc_insertion_point(field_set:lkpMessage.CommandACK.node_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

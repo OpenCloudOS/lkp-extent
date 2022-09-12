@@ -87,15 +87,15 @@ public:
     void setThreadNum(int num);
 
 private:
-    //收集客户端的文件
-    void resultToClient(const RecvCommandPtr &message);
 
     //向客户端发送文件
     void pushToClient(const RecvCommandPtr &message);
-    //向客户端发送数据
+    //向一个确定的客户端连接发送数据
     void SendToClient(const google::protobuf::Message& message, const TcpConnectionPtr& conn);
     //向命令行客户端发送数据
     void SendToCmdClient(const google::protobuf::Message& message);
+    //向client pool中的所有客户端广播消息
+    void BroadToClients(lkpMessage::Command message);
 
     // IPC 相关函数
     // 建立进程间的连接

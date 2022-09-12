@@ -126,59 +126,31 @@ private:
     {
         lkpMessage::commandID myCommandEnum = message->command();
         string myCommandString;
-        lkpEnumToCmds(myCommandEnum, myCommandString);
+        if(!lkpEnumToCmds(myCommandEnum, myCommandString))
+            return;
+        
         printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
 
-        switch(myCommandEnum){
-            case lkpMessage::UPDATE:
-                break;
-            case lkpMessage::RUN:
-                break;
-            case lkpMessage::RESULT:{
-                uint32_t clientNum = message->client_num();
-                uint32_t clientOKNum = message->client_ok_num();
-                printf("PUSH: %u clients have connected..\n", clientNum);
-                lkpMessage::Return::NodeInfo node;
-                for (int i = 0; i < clientNum - clientOKNum; ++i)
-                {
-                    node = message->node_info(i);
-                    printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
-                }
-                if(clientNum == clientOKNum){
-                    printf("all result successful\n");
-                }
-                break;
+        if(myCommandEnum == lkpMessage::LIST){
+            uint32_t clientNum = message->client_num();
+            printf("LIST: %u clients have connected..\n", clientNum);
+            lkpMessage::Return::NodeInfo node;
+            for (int i = 0; i < clientNum; ++i)
+            {
+                node = message->node_info(i);
+                printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
             }
-                
-            case lkpMessage::PUSH:{
-                uint32_t clientNum = message->client_num();
-                uint32_t clientOKNum = message->client_ok_num();
-                printf("PUSH: %u clients have connected..\n", clientNum);
-                lkpMessage::Return::NodeInfo node;
-                for (int i = 0; i < clientNum - clientOKNum; ++i)
-                {
-                    node = message->node_info(i);
-                    printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
-                }
-                if(clientNum == clientOKNum){
-                    printf("all push successful\n");
-                }
-                break;
+        }
+        else{
+            uint32_t clientNum = message->client_num();
+            uint32_t clientOKNum = message->client_ok_num();
+            printf("%s : %u / %u clients succeess!\n", myCommandString.c_str(), clientOKNum, clientNum);
+            lkpMessage::Return::NodeInfo node;
+            for (int i = 0; i < clientNum - clientOKNum; ++i)
+            {
+                node = message->node_info(i);
+                printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
             }
-            case lkpMessage::LIST:{
-                uint32_t clientNum = message->client_num();
-                printf("LIST: %u clients have connected..\n", clientNum);
-                lkpMessage::Return::NodeInfo node;
-                for (int i = 0; i < clientNum; ++i)
-                {
-                    node = message->node_info(i);
-                    printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
-                }
-
-                break;
-            }
-            
-            default:break;
         }
     }
 
@@ -231,8 +203,6 @@ int main(int argc, char *argv[])
                    "  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n",
                    argv[1]);
         }
-
-        //TODO: should check if testcase name is valid
 
         //Testcase
         commandToSend.set_testcase(string(argv[2]));
