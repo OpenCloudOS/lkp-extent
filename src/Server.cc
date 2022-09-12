@@ -1,5 +1,5 @@
 #include "lkpServer.h"
-
+lkpServer *g_asyncLog = NULL;
 int main(int argc, char *argv[])
 {
     
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
     off_t kRollSize = 500 * 1000 * 1000;
     lkpServer Server(&loop, serverAddr, numThreads, idleSeconds, kRollSize, flushInterval);
-
+    g_asyncLog = &Server;
 
     Server.start(); //server_.start() 绝对不能在构造函数里调用，这么做将来会有线程安全的问题
     loop.loop();

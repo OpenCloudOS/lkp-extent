@@ -130,7 +130,7 @@ private:
         ACK.set_node_id(message->node_id());
         int status = 0;
 
-        //如果上一个命令还没有运行完
+        //如果上一个命令还没有运行完，现场尝试回收子进程，如果回收失败，说明上一条命令此时还不可能结束
         if(lastPid_>0 && waitpid(lastPid_, &status, WNOHANG)==0){
             ACK.set_status(false);
             ACK.set_ack_message("ERROR 10: Command " + lastCmdString_ + " is still ruunning!");
@@ -159,6 +159,7 @@ private:
                 }
                 else{
                     lastPid_ = pid;
+                    //父进程阻塞回收子进程 ???
                     if(waitpid(pid, &status, 0)==-1){
                         ACK.set_status(false);
                         ACK.set_ack_message("ERROR 12: Command UPDATE cannot run!");
@@ -174,7 +175,7 @@ private:
 
             case lkpMessage::RUN:{
                 char* testname = (char*)(message->testcase().data());
-                char* runArgv[] = {"lkp-ctl", "run" , testname};
+                char* runArgv[6] = {"lkp-ctl", "run" , testname};
                 unsigned int dockerNum = message->docker_num();
                 if(message->docker_num()){
                     runArgv[3] = "-c ";
@@ -406,7 +407,8 @@ int main(int argc, char *argv[])
 {
     uint16_t port = 7777;
     int seconds = 3;
-    string ip = "114.212.125.145";
+    // string ip = "114.212.125.145";
+    string ip = "192.168.80.128";
 
     if (argc != 3)
     {

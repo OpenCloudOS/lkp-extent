@@ -1,5 +1,11 @@
 #include "lkpServer.h"
 
+//前端写日志时调用
+void asyncOutput(const char *msg, int len)
+{
+    g_asyncLog->append(msg, len);
+}
+
 lkpServer::lkpServer(EventLoop *loop,
                      const InetAddress &listenAddr, int numThreads, int idleSeconds,
                      off_t rollSize, int flushInterval)
@@ -25,7 +31,8 @@ lkpServer::lkpServer(EventLoop *loop,
       cond_(mutex_),
       currentBuffer_(new Buffer_log),
       nextBuffer_(new Buffer_log),
-      buffers_()
+      buffers_(),
+      basename_("./log/logfile")//缓冲区的文件名称
 
 {
     //绑定业务lkpMessage::xxxxx的回调函数，lkpMessage::Command等在.proto文件中
@@ -58,6 +65,7 @@ lkpServer::lkpServer(EventLoop *loop,
     server_.setThreadNum(numThreads_);
 
     //缓冲区使用
+    muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
     currentBuffer_->bzero();
     nextBuffer_->bzero();
     buffers_.reserve(16);
@@ -84,8 +92,11 @@ void lkpServer ::SendToClient(const google::protobuf::Message &message, const Tc
     {
         codec_.send(conn, message);
     }
-    else
-        printf("No such client!\n");
+    else{
+        // printf("No such client!\n");
+        LOG_INFO<<"No such client!";
+    }
+        
 }
 
 //向命令行回复结果
@@ -100,9 +111,9 @@ void lkpServer ::SendToCmdClient(const google::protobuf::Message &message)
 //客户端请求建立新的连接
 void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 {
-    // LOG_INFO << conn->peerAddress().toIpPort() << " -> "
-    //          << conn->localAddress().toIpPort() << " is "
-    //          << (conn->connected() ? "UP" : "DOWN");
+    LOG_INFO << conn->peerAddress().toIpPort() << " -> "
+             << conn->localAddress().toIpPort() << " is "
+             << (conn->connected() ? "UP" : "DOWN");
 
     if (conn->connected())
     {
@@ -112,12 +123,13 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
             if (!hasCmdConnected_)
             {
                 CmdConnection_ = conn;
-                printf("lkpServer: Has connected to cmdClient!\n");
+                LOG_INFO<<"lkpServer: Has connected to cmdClient!";
             }
             else
             {
                 CmdConnection_->shutdown();
-                printf("lkpServer Error: Has connected to a CmdClient!\n");
+                // printf("lkpServer Error: Has connected to a CmdClient!\n");
+                LOG_INFO<<"lkpServer Error: Has connected to a CmdClient!";
             }
         }
         //和客户端建立连接
@@ -233,7 +245,8 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     lkpMessage::commandID myCommand = message->command();
     string myCommandString;
     lkpEnumToCmds(myCommand, myCommandString);
-    printf("Recv a command: %s\n", myCommandString.c_str());
+    // printf("Recv a command: %s\n", myCommandString.c_str());
+    LOG_INFO<<"Recv a command:"<<myCommandString;
     
     switch(myCommand){
         case lkpMessage::UPDATE:
@@ -251,6 +264,7 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         }
         case lkpMessage::PUSH:{
             pushToClient(message);
+            break;//??? 应该添加本句???
         }
         case lkpMessage::LIST:{
             lkpMessage::Return ReturnToSend;//返回给命令行的回复
@@ -305,8 +319,8 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 
         SendToClient(fileMessage,conn);
 
-        printf("push testcase to client end!\n");
-
+        // printf("push testcase to client end!\n");
+        LOG_INFO<<"push testcase to client end!";
     }
 }
 
@@ -391,14 +405,17 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
         //检查文件是否完整
         if (recvSize != fileSizeMap_[conn])
         {
-            printf("recvSize:%d,fileSize_:%d\n", recvSize, fileSizeMap_[conn]);
-            printf("node:%d file is not complete!\n",message->node_id());
+            // printf("recvSize:%d,fileSize_:%d\n", recvSize, fileSizeMap_[conn]);
+            // printf("node:%d file is not complete!\n",message->node_id());
+            LOG_INFO<<"recvSize:"<<recvSize<<",fileSize_:"<<fileSizeMap_[conn];
+            LOG_INFO<<"node:"<<message->node_id()<<" file is not complete!";
 
             clientPool_.update_info(message->node_id(),"file is not completed");
         }
         else
         {
-            printf("recv a complete file\n");
+            // printf("recv a complete file\n");
+            LOG_INFO<<"recv a complete file";
 
             //成功
             clientOKNum_++;
@@ -430,7 +447,8 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
     {
         int nodeID = stoi(message->file_name());
         fileNameMap_[conn] = "./testcase/server/result" + std::to_string(nodeID);
-        printf("fileName_:%s\n", fileNameMap_[conn].c_str());
+        // printf("fileName_:%s\n", fileNameMap_[conn].c_str());
+        LOG_INFO<<"fileName_:"<<fileNameMap_[conn];
 
         fileSizeMap_[conn] = message->file_size();
         FILE *fp = ::fopen(fileNameMap_[conn].c_str(), "wb");
@@ -453,7 +471,7 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &m
     //time wheeling
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
 
-    printf("Entry_nodeID:%d\n",(weakEntry.lock())->Entry_nodeID);
+    // printf("Entry_nodeID:%d\n",(weakEntry.lock())->Entry_nodeID);
 
     EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
     if (entry)
@@ -466,7 +484,8 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &m
 //收到未知数据包的回调函数
 void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
 {
-    printf("error! shut down the connection\n");
+    // printf("error! shut down the connection\n");
+    LOG_INFO<<"error! shut down the connectio";
 }
 
 //计时器，前进tail
@@ -485,7 +504,8 @@ void lkpServer::dumpConnectionBuckets() const
          ++bucketI, ++idx)
     {
         const Bucket &bucket = *bucketI;
-        printf("[%d] len = %zd : ", idx, bucket.size());
+        // printf("[%d] len = %zd : ", idx, bucket.size());
+        LOG_INFO<<idx<<" len = "<<bucket.size();
         for (const auto &it : bucket)
         {
             bool connectionDead = it->weakConn_.expired();
@@ -534,6 +554,8 @@ void lkpServer::threadFunc()
     //让start()的latch_.wait()得到0，可以运行前端线程
     latch_.countDown();
 
+    LogFile output(basename_, rollSize_, false);
+
     //准备2块缓冲区，用于分配给一级
     BufferPtr newBuffer1(new Buffer_log);
     BufferPtr newBuffer2(new Buffer_log);
@@ -579,11 +601,14 @@ void lkpServer::threadFunc()
                      Timestamp::now().toFormattedString().c_str(),
                      buffersToWrite.size() - 2);
             fputs(buf, stderr);
-            // output.append(buf, static_cast<int>(strlen(buf)));
+            output.append(buf, static_cast<int>(strlen(buf)));
             buffersToWrite.erase(buffersToWrite.begin() + 2, buffersToWrite.end()); //丢弃多余的日志，只保留前2个
         }
 
-        //向CMDclient发送
+        for (const auto &buffer : buffersToWrite)
+        {
+            output.append(buffer->data(), buffer->length());//写日志
+        }
 
         if (buffersToWrite.size() > 2)
         {
@@ -609,5 +634,6 @@ void lkpServer::threadFunc()
         }
 
         buffersToWrite.clear();
+        output.flush();
     }
 }

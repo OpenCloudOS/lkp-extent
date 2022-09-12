@@ -86,6 +86,8 @@ public:
     //设置线程数量
     void setThreadNum(int num);
 
+    void append(const char *logline, int len); //前端向一级缓冲区添加数据，操作一级缓冲区之前必须加锁
+
 private:
 
     //向客户端发送文件
@@ -130,7 +132,7 @@ private:
 
     void dumpConnectionBuckets() const;
 
-    void append(const char *logline, int len); //前端向一级缓冲区添加数据，操作一级缓冲区之前必须加锁
+    
     void threadFunc();//后端操作二级，向CMDcleint发送
 
     TcpServer server_;
@@ -218,4 +220,4 @@ private:
     BufferPtr nextBuffer_ GUARDED_BY(mutex_);    //一级预备缓冲区
     BufferVector buffers_ GUARDED_BY(mutex_);    //二级缓冲区列表，后端和buffersToWrite交换后，操作buffersToWrite写日志，避免长时间占用buffers_阻塞前端
 };
-
+extern lkpServer *g_asyncLog;
