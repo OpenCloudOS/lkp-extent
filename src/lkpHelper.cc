@@ -60,7 +60,8 @@ int lkpClientPool::add(TcpConnectionPtr conn)
         nodeID = nodeCount_++;
         connections_[nodeID] = conn; //新客户端加入
 
-        printf("新客户端加入，nodeID is:%d\n", nodeID);
+        // printf("新客户端加入，nodeID is:%d\n", nodeID);
+        // LOG_INFO<<"新客户端加入，nodeID is:"<<nodeID;
     }
     //分配最小的闲置nodeID
     else
@@ -69,7 +70,8 @@ int lkpClientPool::add(TcpConnectionPtr conn)
         idleNodeID.erase(idleNodeID.begin());
         connections_[nodeID] = conn; //新客户端加入
 
-        printf("新客户端加入，nodeID is:%d\n", nodeID);
+        // printf("新客户端加入，nodeID is:%d\n", nodeID);
+        // LOG_INFO<<"新客户端加入，nodeID is:"<<nodeID;
     }
     return nodeID;
 }

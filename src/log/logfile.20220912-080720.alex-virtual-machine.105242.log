@@ -1,6 +1,0 @@
-20220912 08:07:22.816900Z 105242 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#1] from 192.168.80.128:47642 - TcpServer.cc:80
-20220912 08:07:22.816975Z 105243 INFO  192.168.80.128:47642 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
-20220912 08:07:23.866496Z 105242 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#2] from 192.168.80.128:47652 - TcpServer.cc:80
-20220912 08:07:23.866593Z 105243 INFO  192.168.80.128:47652 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
-20220912 08:07:41.262564Z 105243 INFO  192.168.80.128:47652 -> 192.168.80.128:7777 is DOWN - lkpServer.cc:114
-20220912 08:07:41.262652Z 105242 INFO  TcpServer::removeConnectionInLoop [lkpServer] - connection lkpServer-0.0.0.0:7777#2 - TcpServer.cc:109

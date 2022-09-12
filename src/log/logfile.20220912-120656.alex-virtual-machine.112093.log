@@ -1,0 +1,21 @@
+20220912 12:06:57.693403Z 112093 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#1] from 192.168.80.128:33874 - TcpServer.cc:80
+20220912 12:06:57.693461Z 112094 INFO  192.168.80.128:33874 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 12:06:58.837590Z 112093 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#2] from 192.168.80.128:33882 - TcpServer.cc:80
+20220912 12:06:58.837675Z 112094 INFO  192.168.80.128:33882 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 12:06:59.781751Z 112093 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#3] from 192.168.80.128:33886 - TcpServer.cc:80
+20220912 12:06:59.781838Z 112094 INFO  192.168.80.128:33886 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 12:07:01.506787Z 112093 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#4] from 127.0.0.1:44050 - TcpServer.cc:80
+20220912 12:07:01.506880Z 112094 INFO  127.0.0.1:44050 -> 127.0.0.1:7777 is UP - lkpServer.cc:114
+20220912 12:07:01.506889Z 112094 INFO  lkpServer: Has connected to cmdClient! - lkpServer.cc:126
+20220912 12:07:01.507685Z 112094 INFO  Recv a command:PUSH - lkpServer.cc:249
+20220912 12:07:01.507922Z 112094 INFO  push testcase to client end! - lkpServer.cc:333
+20220912 12:07:01.507931Z 112094 INFO  push testcase to client end! - lkpServer.cc:333
+20220912 12:07:01.507938Z 112094 INFO  push testcase to client end! - lkpServer.cc:333
+20220912 12:07:03.145415Z 112094 INFO  127.0.0.1:44050 -> 127.0.0.1:7777 is DOWN - lkpServer.cc:114
+20220912 12:07:03.145466Z 112093 INFO  TcpServer::removeConnectionInLoop [lkpServer] - connection lkpServer-0.0.0.0:7777#4 - TcpServer.cc:109
+20220912 12:07:03.514246Z 112094 INFO  192.168.80.128:33874 -> 192.168.80.128:7777 is DOWN - lkpServer.cc:114
+20220912 12:07:03.514302Z 112093 INFO  TcpServer::removeConnectionInLoop [lkpServer] - connection lkpServer-0.0.0.0:7777#1 - TcpServer.cc:109
+20220912 12:07:04.098319Z 112094 INFO  192.168.80.128:33882 -> 192.168.80.128:7777 is DOWN - lkpServer.cc:114
+20220912 12:07:04.098380Z 112093 INFO  TcpServer::removeConnectionInLoop [lkpServer] - connection lkpServer-0.0.0.0:7777#2 - TcpServer.cc:109
+20220912 12:07:04.730470Z 112094 INFO  192.168.80.128:33886 -> 192.168.80.128:7777 is DOWN - lkpServer.cc:114
+20220912 12:07:04.730533Z 112093 INFO  TcpServer::removeConnectionInLoop [lkpServer] - connection lkpServer-0.0.0.0:7777#3 - TcpServer.cc:109
