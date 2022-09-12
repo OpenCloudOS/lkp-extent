@@ -41,6 +41,7 @@
 #include <boost/circular_buffer.hpp>
 #include "muduo/base/LogStream.h"
 #include "muduo/base/LogFile.h"
+#include "muduo/base/AsyncLogging.h"
 
 #include "lib/lkpProto.pb.h"
 #include "lib/lkpCodec.h"
@@ -51,6 +52,15 @@ using namespace muduo;
 using namespace muduo::net;
 
 typedef std::shared_ptr<lkpMessage::Return> ReturnPtr;
+
+
+// off_t kRollSize = 500 * 1000 * 1000;
+// muduo::AsyncLogging *g_asyncLog = NULL;
+// //前端写日志时调用
+// void asyncOutput(const char *msg, int filelen)
+// {
+//     g_asyncLog->append(msg, filelen);
+// }
 
 class lkpCmdClient : boost::noncopyable
 {
@@ -64,6 +74,8 @@ public:
           codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                       boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
     {
+        // muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
+
         //绑定业务回调函数
         dispatcher_.registerMessageCallback<lkpMessage::Return>(bind(&lkpCmdClient::onReturnMsg,
                                                                      this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
