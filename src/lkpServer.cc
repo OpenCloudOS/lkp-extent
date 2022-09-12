@@ -450,6 +450,9 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &m
     //printf("recv a HeartBeat, status is %d\n", (int)message->status());
     //time wheeling
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
+
+    printf("Entry_nodeID:%d\n",(weakEntry.lock())->Entry_nodeID);
+
     EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
     if (entry)
     {
