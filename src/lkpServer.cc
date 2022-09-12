@@ -37,15 +37,15 @@ lkpServer::lkpServer(EventLoop *loop,
 {
     //绑定业务lkpMessage::xxxxx的回调函数，lkpMessage::Command等在.proto文件中
     dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpServer::onCommandMsg,
-                                                                       this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                                                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::CommandACK>(std::bind(&lkpServer::onCommandACK,
-                                                                          this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                                                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::PushACK>(std::bind(&lkpServer::onPushACK,
-                                                                       this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                                                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::File>(std::bind(&lkpServer::onFileMsg,
                                                                     this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::HeartBeat>(std::bind(&lkpServer::onHeartBeat,
-                                                                         this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                                                                    this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     //绑定新连接请求回调函数
     server_.setConnectionCallback(
@@ -248,6 +248,16 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     // printf("Recv a command: %s\n", myCommandString.c_str());
     LOG_INFO<<"Recv a command:"<<myCommandString;
     
+    if (!message->send_to_all() && message->node_id()>=0 && !clientPool_.getConn(message->node_id())){
+        lkpMessage::Return ReturnToSend;//返回给命令行的回复
+        ReturnToSend.set_command(myCommand);
+        ReturnToSend.set_client_num(clientPool_.size());
+        ReturnToSend.set_client_ok_num(0);
+        lkpMessage::Return::NodeInfo *NodeInfoPtr = ReturnToSend.add_node_info();
+        NodeInfoPtr->set_node_id(message->node_id());
+        NodeInfoPtr->set_node_msg("ERROR 1: This ID doesn't exist!");
+    }
+
     switch(myCommand){
         case lkpMessage::UPDATE:
         case lkpMessage::RUN:
@@ -264,7 +274,7 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
         }
         case lkpMessage::PUSH:{
             pushToClient(message);
-            break;//??? 应该添加本句???
+            break;
         }
         case lkpMessage::LIST:{
             lkpMessage::Return ReturnToSend;//返回给命令行的回复

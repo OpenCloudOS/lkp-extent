@@ -146,7 +146,8 @@ private:
             uint32_t clientOKNum = message->client_ok_num();
             printf("%s : %u / %u clients succeess!\n", myCommandString.c_str(), clientOKNum, clientNum);
             lkpMessage::Return::NodeInfo node;
-            for (int i = 0; i < clientNum - clientOKNum; ++i)
+            int sz = message->node_info_size();
+            for (int i = 0; i < sz; ++i)
             {
                 node = message->node_info(i);
                 printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());

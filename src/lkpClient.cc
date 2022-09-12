@@ -132,6 +132,7 @@ private:
 
         //如果上一个命令还没有运行完，现场尝试回收子进程，如果回收失败，说明上一条命令此时还不可能结束
         if(lastPid_>0 && waitpid(lastPid_, &status, WNOHANG)==0){
+            lastStatus_ = WIFEXITED(status);
             ACK.set_status(false);
             ACK.set_ack_message("ERROR 10: Command " + lastCmdString_ + " is still ruunning!");
             SendToServer(ACK);
@@ -139,7 +140,7 @@ private:
         }
 
         lkpEnumToCmds(message->command(), lastCmdString_);
-
+        lastPid_ = 0;
         switch(message->command()){
 
             case lkpMessage::UPDATE:{
@@ -159,13 +160,13 @@ private:
                 }
                 else{
                     lastPid_ = pid;
-                    //父进程阻塞回收子进程 ???
-                    if(waitpid(pid, &status, 0)==-1){
+                    if(waitpid(pid, &status, WNOHANG)==-1){
                         ACK.set_status(false);
                         ACK.set_ack_message("ERROR 12: Command UPDATE cannot run!");
                         SendToServer(ACK);
                     }
                     else{
+                        lastStatus_ = WIFEXITED(status);
                         ACK.set_status(true);
                         SendToServer(ACK);
                     }
@@ -208,6 +209,7 @@ private:
                         SendToServer(ACK);
                     }
                     else{
+                        lastStatus_ = WIFEXITED(status);
                         ACK.set_status(true);
                         SendToServer(ACK);
                     }
@@ -361,6 +363,7 @@ private:
     void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr& message, Timestamp time)
     {
         printf("Error!\n");
+        conn->shutdown();
     }
 
 
@@ -370,7 +373,12 @@ private:
         lkpMessage::HeartBeat heart;
         heart.set_status(true);
         SendToServer(heart);
-        //TODO : Check if lastPid_ is end. 
+        int status;
+        if(lastPid_>0 && waitpid(lastPid_, &status, WNOHANG)!=0){
+            lastPid_ = 0;
+        }
+        lastStatus_ = WIFEXITED(status);
+        
     }
 
     //向服务器发送数据
@@ -401,6 +409,7 @@ private:
     int kBufSize_;
     pid_t lastPid_;
     string lastCmdString_;
+    bool lastStatus_;
 };
 
 int main(int argc, char *argv[])
