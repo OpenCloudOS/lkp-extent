@@ -1,0 +1,13 @@
+20220912 11:51:13.902120Z 111038 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#1] from 192.168.80.128:57896 - TcpServer.cc:80
+20220912 11:51:13.902222Z 111039 INFO  192.168.80.128:57896 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 11:51:14.526763Z 111038 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#2] from 192.168.80.128:57900 - TcpServer.cc:80
+20220912 11:51:14.526852Z 111039 INFO  192.168.80.128:57900 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 11:51:15.054941Z 111038 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#3] from 192.168.80.128:57904 - TcpServer.cc:80
+20220912 11:51:15.055023Z 111039 INFO  192.168.80.128:57904 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
+20220912 11:51:16.565719Z 111038 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#4] from 127.0.0.1:39834 - TcpServer.cc:80
+20220912 11:51:16.565793Z 111039 INFO  127.0.0.1:39834 -> 127.0.0.1:7777 is UP - lkpServer.cc:114
+20220912 11:51:16.565804Z 111039 INFO  lkpServer: Has connected to cmdClient! - lkpServer.cc:126
+20220912 11:51:16.565836Z 111039 INFO  Recv a command:PUSH - lkpServer.cc:249
+20220912 11:51:16.565985Z 111039 INFO  push testcase to client end! - lkpServer.cc:333
+20220912 11:51:16.565993Z 111039 INFO  push testcase to client end! - lkpServer.cc:333
+20220912 11:51:16.566000Z 111039 INFO  push testcase to client end! - lkpServer.cc:333
