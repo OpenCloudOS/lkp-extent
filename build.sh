@@ -15,10 +15,11 @@ cp $ROOT_DIR/src/build/release-install-cpp11/lib/* /usr/lib
 #make lkp-extent
 cd $ROOT_DIR/src
 make
-echo "lkp-extent ready"
 
 #install lkp-extent
 mkdir -p /usr/local/bin
 ln -sf $(pwd)/bin/lkp-ctl /usr/local/bin/lkp-ctl
+
+echo "lkp-extent is ready!"
 
 
