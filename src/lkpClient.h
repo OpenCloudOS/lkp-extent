@@ -1,3 +1,6 @@
+#ifndef LKP_CLIENT
+#define LKP_CLIENT
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,7 +152,9 @@ public:
 };
 
 //前端写日志时调用
-extern lkpClient *g_asyncLog;
+extern lkpClient *g_asyncLog_client;
 
-void asyncOutput(const char *msg, int filelen);
+void asyncOutput_client(const char *msg, int filelen);
+
+#endif
 

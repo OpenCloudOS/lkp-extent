@@ -20,10 +20,10 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
       currentBuffer_(new Buffer_log),
       nextBuffer_(new Buffer_log),
       buffers_(),
-      basename_("./log/logfile_client") //缓冲区的文件名称
+      basename_(ROOT_DIR + "/log/clientfile") //缓冲区的文件名称
 {
     //缓冲区使用
-    muduo::Logger::setOutput(asyncOutput); //LOG_INFO调用asyncOutput
+    
     currentBuffer_->bzero();
     nextBuffer_->bzero();
     buffers_.reserve(16);
@@ -49,8 +49,6 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
 
     //绑定定时器产生心跳包
     loop_->runEvery(seconds_, std::bind(&lkpClient::onTimer, this));
-
-    client_.enableRetry();
 }
 
 lkpClient::~lkpClient()
@@ -67,6 +65,7 @@ lkpClient::~lkpClient()
 void lkpClient::connect()
 {
     client_.connect();
+    printf("lkp-extent client init succesfully!\n");
 }
 
 //断开与服务器的连接
@@ -84,10 +83,12 @@ void lkpClient::onConnection(const TcpConnectionPtr &conn)
     if (conn->connected())
     {
         connection_ = conn;
+        printf("connect success!\n");
     }
     else
     {
         connection_.reset();
+        printf("cannot connect\n");
     }
 }
 
@@ -154,12 +155,12 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
 
     case lkpMessage::RUN:
     {
-        char *testname = (char *)(message->testcase().data());
-        char *runArgv[6] = {"lkp-ctl", "run", testname};
+        char *testname = (char*)(message->testcase().data());
+        char *runArgv[6] = {(char*)"lkp-ctl",(char*)"run", testname};
         unsigned int dockerNum = message->docker_num();
         if (message->docker_num())
         {
-            runArgv[3] = "-c ";
+            runArgv[3] = (char*)("-c ");
             char dockerNumChar[20];
             sprintf(dockerNumChar, "%u", message->docker_num());
             runArgv[4] = dockerNumChar;
@@ -229,9 +230,9 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 {
     nodeID_ = message->node_id();
 
-    string fileName = "./testcase/node" + std::to_string(nodeID_) + "/" + message->testcase();
-    // printf("result fileName:%s\n", fileName.c_str());
-    LOG_INFO << "result fileName:" << fileName;
+    string fileName = ROOT_DIR + "results/local/" +  message->testcase();
+
+    LOG_INFO << "Result fileName:" << fileName;
 
     //获取文件的大小
     struct stat statbuf;
@@ -334,6 +335,8 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
             ack.set_ack_message("push recv success");
             ack.set_node_id(nodeID_);
             SendToServer(ack);
+            const string copyToJobs = "cp " + fileName_ + " " + ROOT_DIR + "/lkp-tests/jobs";
+            system(copyToJobs.c_str());
             return;
         }
     }
@@ -341,8 +344,7 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
     else if (message->first_patch())
     {
         nodeID_ = message->node_id();
-        fileName_ = "./testcase/node" + std::to_string(nodeID_) + "/client_testcase";
-        // printf("fileName_:%s\n", fileName_.c_str());
+        fileName_ = ROOT_DIR + "/testcases/" + message->file_name();
         LOG_INFO << "fileName_:" << fileName_;
 
         fileSize_ = message->file_size();
@@ -508,38 +510,9 @@ void lkpClient::threadFunc()
     }
 }
 
+lkpClient *g_asyncLog_client = NULL;
 //前端写日志时调用
-lkpClient *g_asyncLog = NULL;
-void asyncOutput(const char *msg, int filelen)
+void asyncOutput_client(const char *msg, int filelen)
 {
-    g_asyncLog->append(msg, filelen);
-}
-
-int main(int argc, char *argv[])
-{
-    uint16_t port = 7777;
-    int seconds = 3;
-    // string ip = "114.212.125.145";
-    string ip = "192.168.80.128";
-
-    if (argc != 3)
-    {
-        printf("请输入：1.端口号 2.发送OK的间隔 \n");
-    }
-    else
-    {
-        ip = argv[1];
-        port = static_cast<uint16_t>(atoi(argv[2]));
-        seconds = atoi(argv[3]);
-    }
-
-    EventLoop loop;
-    InetAddress serverAddr(ip, port);
-
-    lkpClient client(&loop, serverAddr, seconds);
-
-    g_asyncLog = &client;
-
-    client.connect();
-    loop.loop();
+    g_asyncLog_client->append(msg, filelen);
 }

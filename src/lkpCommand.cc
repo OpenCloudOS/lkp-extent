@@ -171,6 +171,8 @@ private:
                 LOG_INFO<<"   Node "<<node.node_id()<<": "<<node.node_msg();
             }
         }
+
+        exit(0);
     }
 
     //收到未知数据包的回调函数
@@ -204,9 +206,9 @@ int main(int argc, char *argv[])
     // [RUN] [TESTCASE] [NODEID] [VMCNT]
     // [UPDATE/RESULT] [NULL] [NODEID] [NULL]
     // [PUSH] [TESTCASE]  [NODEID] [NULL]
-    if (argc != 5)
+    if (argc != 6)
     {
-        printf("  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n");
+        printf("  Usage: [Command] [Testcase] [NodeID] [ContainerCnt] [PATH]\n");
         return -1;
     }
     else
@@ -220,7 +222,7 @@ int main(int argc, char *argv[])
             
         else{
             printf("lkpCmdClient Error: No supprt for command %s\n"
-                   "  Usage: [Command] [Testcase] [NodeID] [ContainerCnt]\n",
+                   "  Usage: [Command] [Testcase] [NodeID] [ContainerCnt] [PATH]\n",
                    argv[1]);
         }
 
@@ -247,8 +249,9 @@ int main(int argc, char *argv[])
             
     }
 
+    const string myPath = string(argv[5]);
     //log
-    muduo::AsyncLogging log("./log/logfile_command_line", kRollSize);
+    muduo::AsyncLogging log( myPath + "/log/CLI_logfile", kRollSize);
     log.start();
     g_asyncLog = &log;
 

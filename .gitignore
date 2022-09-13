@@ -5,3 +5,6 @@ workspace
 build
 src/muduo
 src/build
+log/*
+result/remote/*
+result/local/*

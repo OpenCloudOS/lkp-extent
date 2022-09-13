@@ -1,17 +1,19 @@
 #include "lkpServer.h"
 
+lkpServer *g_asyncLog_server = NULL;
 //前端写日志时调用
-void asyncOutput(const char *msg, int len)
+void asyncOutput_server(const char *msg, int len)
 {
-    g_asyncLog->append(msg, len);
+    g_asyncLog_server->append(msg, len);
 }
 
 lkpServer::lkpServer(EventLoop *loop,
-                     const InetAddress &listenAddr, int numThreads, int idleSeconds,
-                     off_t rollSize, int flushInterval)
+                     const InetAddress &listenAddr,
+                     const lkpConfig &MyConfig,
+                     off_t rollSize)
     : server_(loop, listenAddr, "lkpServer"),
       loop_(loop),
-      numThreads_(numThreads),
+      numThreads_(MyConfig.ServerThreadsNum),
       /*lkpCodec & lkpDispatcher*/
       //绑定dispatcher_收到消息后的默认回调函数，这里设置为收到的message类型未知时的回调函数
       dispatcher_(std::bind(&lkpServer::onUnknownMsg, this,
@@ -23,7 +25,7 @@ lkpServer::lkpServer(EventLoop *loop,
       kBufSize_(64 * 1024),
 
       /* 高速缓冲区使用变量，日志文件使用*/
-      flushInterval_(flushInterval),
+      flushInterval_(MyConfig.ServerflushInterval),
       running_(false),
       rollSize_(rollSize),
       thread_(std::bind(&lkpServer::threadFunc, this), "Logging_SendtoCMDclient"),
@@ -32,11 +34,11 @@ lkpServer::lkpServer(EventLoop *loop,
       currentBuffer_(new Buffer_log),
       nextBuffer_(new Buffer_log),
       buffers_(),
-      basename_("./log/logfile")//缓冲区的文件名称
+      basename_(ROOT_DIR + "/log/logfile")//缓冲区的文件名称
 
 {
     //缓冲区使用
-    muduo::Logger::setOutput(asyncOutput); //LOG_INFO调用asyncOutput
+    
     currentBuffer_->bzero();
     nextBuffer_->bzero();
     buffers_.reserve(16);
@@ -64,7 +66,7 @@ lkpServer::lkpServer(EventLoop *loop,
     
 
     //定时断开无响应客户端的连接
-    connectionBuckets_.resize(idleSeconds);
+    connectionBuckets_.resize(MyConfig.ServerTimeControl);
     loop->runEvery(1.0, std::bind(&lkpServer::onTimer, this));
 
     //设置IO线程的数量
@@ -74,6 +76,7 @@ lkpServer::lkpServer(EventLoop *loop,
 //启动服务器
 void lkpServer ::start()
 {
+    // muduo::Logger::setOutput(asyncOutput_server); //LOG_INFO调用asyncOutput_server
     server_.start();
 
     //push的文件描述符
@@ -83,6 +86,8 @@ void lkpServer ::start()
     running_ = true;  //允许后端写日志
     thread_.start(); //启动后端线程threadFunc
     latch_.wait();   //等待后端线程threadFunc启动，否则服务器不能执行其他动作
+
+    printf("lkp-extent server init: server start successfully!\n");
 } 
 
 //向客户端发送数据
@@ -153,7 +158,7 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
 
 void lkpServer::pushToClient(const RecvCommandPtr &message)
 {
-    string fileName = message->testcase(); //文件名称
+    string fileName = ROOT_DIR + "/testcases/" + message->testcase(); //文件名称
     //获取文件的大小
     struct stat statbuf;
     stat(fileName.c_str(), &statbuf);
@@ -455,9 +460,8 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
     //第一次接收
     else if (message->first_patch())
     {
-        int nodeID = stoi(message->file_name());
-        fileNameMap_[conn] = "./testcase/server/result" + std::to_string(nodeID);
-        // printf("fileName_:%s\n", fileNameMap_[conn].c_str());
+        int nodeID = message->node_id();
+        fileNameMap_[conn] = ROOT_DIR + "/results/remote/node" + std::to_string(nodeID) + "/" + message->file_name();
         LOG_INFO<<"fileName_:"<<fileNameMap_[conn];
 
         fileSizeMap_[conn] = message->file_size();
@@ -477,16 +481,12 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
 //收到心跳包的回调函数
 void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &message, Timestamp time)
 {
-    //printf("recv a HeartBeat, status is %d\n", (int)message->status());
     //time wheeling
     WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
-
-    // printf("Entry_nodeID:%d\n",(weakEntry.lock())->Entry_nodeID);
 
     EntryPtr entry(weakEntry.lock());                                          //引用一次，增加引用计数
     if (entry)
     {
-        // printf("收到客户端的信息，nodeID is:%d\n",entry->Entry_nodeID);
         connectionBuckets_.back().insert(entry); //放入环形缓冲区，缓冲区的每个位置放置1个哈希表，哈系表的元素是shared_ptr<Entry>
     }
 }
@@ -494,6 +494,7 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &m
 //收到未知数据包的回调函数
 void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
 {
+    conn->shutdown();
     // printf("error! shut down the connection\n");
     LOG_INFO<<"error! shut down the connectio";
 }
@@ -514,7 +515,7 @@ void lkpServer::dumpConnectionBuckets() const
          ++bucketI, ++idx)
     {
         const Bucket &bucket = *bucketI;
-        // printf("[%d] len = %zd : ", idx, bucket.size());
+
         LOG_INFO<<idx<<" len = "<<bucket.size();
         for (const auto &it : bucket)
         {

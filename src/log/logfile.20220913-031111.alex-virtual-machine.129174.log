@@ -1,7 +1,0 @@
-20220913 03:11:11.787748Z 129174 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#1] from 192.168.80.128:56528 - TcpServer.cc:80
-20220913 03:11:11.787844Z 129175 INFO  192.168.80.128:56528 -> 192.168.80.128:7777 is UP - lkpServer.cc:114
-20220913 03:11:12.827901Z 129174 INFO  TcpServer::newConnection [lkpServer] - new connection [lkpServer-0.0.0.0:7777#2] from 127.0.0.1:38458 - TcpServer.cc:80
-20220913 03:11:12.827974Z 129175 INFO  127.0.0.1:38458 -> 127.0.0.1:7777 is UP - lkpServer.cc:114
-20220913 03:11:12.827982Z 129175 INFO  lkpServer: Has connected to cmdClient! - lkpServer.cc:126
-20220913 03:11:12.828014Z 129175 INFO  Recv a command:PUSH - lkpServer.cc:249
-20220913 03:11:12.828103Z 129175 INFO  push testcase to client end! - lkpServer.cc:333

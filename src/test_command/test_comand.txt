@@ -1,2 +1,0 @@
-./build/lkpCommand PUSH ./testcase/server/temp.txt -1 0
-./build/lkpCommand RESULT client_testcase -1 0

@@ -14,6 +14,26 @@ using namespace muduo;
 using namespace muduo::net;
 
 extern std::vector<string> lkpCommands;
+extern const std::vector<string> ConfigString;
+extern string ROOT_DIR;
+
+typedef struct myLkpConfig{
+    uint16_t ServerListenPort;
+    uint16_t ServerThreadsNum;
+    uint16_t ServerTimeControl;
+    uint16_t ServerflushInterval;
+    uint16_t ServerPort;
+    uint16_t HeartBeatTime;
+    string ServerPushPath;
+    string ServerResultPath;
+    string ServerAddress;
+    string ClientPushPath;
+} lkpConfig;
+
+bool lkpConfigInit(std::map<string,string> & m, lkpConfig & myConfig, const string & ROOT_DIR);
+
+
+
 
 //将lkpCommand字符串转换为message中使用的enum
 bool lkpCmdsToEnum(const string& lkpCmdString, lkpMessage::commandID& lkpEnum);

@@ -8,8 +8,47 @@
 
 using namespace std;
 
-//commandID和"UPDATE"等字符串的映射关系
 
+const std::vector<string> ConfigString = {
+    "ServerListenPort",
+    "ServerThreadsNum",
+    "ServerTimeControl",
+    "ServerflushInterval",
+    "ServerPushPath",
+    "ServerResultPath",
+    "ServerAddress",
+    "ServerPort",
+    "HeartBeatTime",
+    "ClientPushPath"
+};
+
+bool lkpConfigInit(std::map<string,string> & m, lkpConfig & myConfig, const string & ROOT_DIR){
+
+    const string CONFIG_PATH = ROOT_DIR + "/lkp-extent.config";
+    if(!ReadConfig(CONFIG_PATH, m)){
+        std::cout << "lkp-ctl init failed: Cannot read config file!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    for(string config:ConfigString){
+        if(!m.count(config)){
+            cout << " miss configure: " << config << endl;
+            return false;
+        }
+    }
+    myConfig.ServerListenPort    = stoi(m.at(ConfigString[0]));
+    myConfig.ServerThreadsNum    = stoi(m.at(ConfigString[1]));
+    myConfig.ServerTimeControl   = stoi(m.at(ConfigString[2]));
+    myConfig.ServerflushInterval = stoi(m.at(ConfigString[3]));
+    myConfig.ServerPushPath      = m.at(ConfigString[4]);
+    myConfig.ServerResultPath    = m.at(ConfigString[5]);
+    myConfig.ServerAddress       = m.at(ConfigString[6]);
+    myConfig.ServerPort          = stoi(m.at(ConfigString[7]));
+    myConfig.HeartBeatTime        = stoi(m.at(ConfigString[8]));
+    myConfig.ClientPushPath      = m.at(ConfigString[9]);
+    cout << "lkp-extent init succesfully!" << endl;
+}
+
+//commandID和"UPDATE"等字符串的映射关系
 std::vector<string> lkpCommands = {
     "UPDATE", "RUN", "RESULT", "PUSH", "LIST"};
 

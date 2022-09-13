@@ -1,3 +1,6 @@
+#ifndef LKP_SERVER
+#define LKP_SERVER
+
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -66,8 +69,9 @@ class lkpServer : noncopyable
 {
 public:
     lkpServer(EventLoop *loop,
-              const InetAddress &listenAddr, int numThreads, int idleSeconds,
-              off_t rollSize, int flushInterval = 3);
+              const InetAddress &listenAddr,
+              const lkpConfig &MyConfig,
+              off_t rollSize);
 
     ~lkpServer()
     {
@@ -219,4 +223,6 @@ private:
     BufferPtr nextBuffer_ GUARDED_BY(mutex_);    //一级预备缓冲区
     BufferVector buffers_ GUARDED_BY(mutex_);    //二级缓冲区列表，后端和buffersToWrite交换后，操作buffersToWrite写日志，避免长时间占用buffers_阻塞前端
 };
-extern lkpServer *g_asyncLog;
+extern lkpServer *g_asyncLog_server;
+void asyncOutput_server(const char *msg, int len);
+#endif
