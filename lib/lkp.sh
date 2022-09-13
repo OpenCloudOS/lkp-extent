@@ -37,6 +37,10 @@ lkp_run_testcase (){
     for job in $(ls ${basename}*);do
         $LKP_ELF run $job
     done
+
+    # add to results path for use
+    tar -cvf result_$jobs.tar $LKP_DIR/jobs/result/*
+    cp result_$jobs.tar $ROOT_DIR/results/local
 }
 
 # - $1: lkp jobs directory

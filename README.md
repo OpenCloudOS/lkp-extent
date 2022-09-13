@@ -73,5 +73,4 @@ lkp-extent是一个依赖于[LKP](https://github.com/intel/lkp-tests "LKP")测�
 #### 进展
 正在研发中......
 
-#### 文档
-请参考《Design.doc》
+

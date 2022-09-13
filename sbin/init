@@ -27,5 +27,4 @@ while getopts ":hd" opt; do
 done
 
 fs_init
-muduo_init
 lkp_install

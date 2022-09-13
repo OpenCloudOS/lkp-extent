@@ -142,7 +142,7 @@ private:
         if(!lkpEnumToCmds(myCommandEnum, myCommandString))
             return;
         
-        printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
+        //printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
         LOG_INFO<<"lkpCommand: Receive a return message, command type:"<<myCommandString;
 
         if(myCommandEnum == lkpMessage::LIST){
