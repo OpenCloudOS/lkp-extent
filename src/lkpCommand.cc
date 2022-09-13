@@ -53,14 +53,14 @@ using namespace muduo::net;
 
 typedef std::shared_ptr<lkpMessage::Return> ReturnPtr;
 
+off_t kRollSize = 500 * 1000 * 1000;
+muduo::AsyncLogging *g_asyncLog = NULL;
+//前端写日志时调用
+void asyncOutput(const char *msg, int filelen)
+{
+    g_asyncLog->append(msg, filelen);
+}
 
-// off_t kRollSize = 500 * 1000 * 1000;
-// muduo::AsyncLogging *g_asyncLog = NULL;
-// //前端写日志时调用
-// void asyncOutput(const char *msg, int filelen)
-// {
-//     g_asyncLog->append(msg, filelen);
-// }
 
 class lkpCmdClient : boost::noncopyable
 {
@@ -74,7 +74,7 @@ public:
           codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                       boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
     {
-        // muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
+        muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
 
         //绑定业务回调函数
         dispatcher_.registerMessageCallback<lkpMessage::Return>(bind(&lkpCmdClient::onReturnMsg,
@@ -113,6 +113,7 @@ public:
         else
         {
             printf("error to send!\n");
+            LOG_INFO<<"error to send!";
         }
     }
 
@@ -142,27 +143,32 @@ private:
             return;
         
         printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
+        LOG_INFO<<"lkpCommand: Receive a return message, command type:"<<myCommandString;
 
         if(myCommandEnum == lkpMessage::LIST){
             uint32_t clientNum = message->client_num();
             printf("LIST: %u clients have connected..\n", clientNum);
+            LOG_INFO<<"LIST: "<<clientNum<< "clients have connected..";
             lkpMessage::Return::NodeInfo node;
             for (int i = 0; i < clientNum; ++i)
             {
                 node = message->node_info(i);
                 printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+                LOG_INFO<<"   Node "<<node.node_id()<<": "<<node.node_msg();
             }
         }
         else{
             uint32_t clientNum = message->client_num();
             uint32_t clientOKNum = message->client_ok_num();
             printf("%s : %u / %u clients succeess!\n", myCommandString.c_str(), clientOKNum, clientNum);
+            LOG_INFO<<myCommandString<<" : "<<clientOKNum<<" / "<<clientNum<<" clients succeess!";
             lkpMessage::Return::NodeInfo node;
             int sz = message->node_info_size();
             for (int i = 0; i < sz; ++i)
             {
                 node = message->node_info(i);
                 printf("   Node %2u: %s\n", node.node_id(), node.node_msg().c_str());
+                LOG_INFO<<"   Node "<<node.node_id()<<": "<<node.node_msg();
             }
         }
     }
@@ -171,6 +177,7 @@ private:
     void onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
     {
         printf("Error!\n");
+        LOG_INFO<<"Error!";
     }
 
     EventLoop *loop_;
@@ -239,6 +246,11 @@ int main(int argc, char *argv[])
         }
             
     }
+
+    //log
+    muduo::AsyncLogging log("./log/logfile_command_line", kRollSize);
+    log.start();
+    g_asyncLog = &log;
 
     lkpCmdClient client(&loop, port, commandToSend);
     client.connect();

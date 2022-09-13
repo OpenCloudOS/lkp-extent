@@ -1,0 +1,3 @@
+20220913 03:15:45.508047Z 129481 INFO  TcpClient::connect[lkpCmdClient] - connecting to 127.0.0.1:7777 - TcpClient.cc:107
+20220913 03:15:45.509132Z 129481 INFO  lkpCommand: Receive a return message, command type:PUSH - lkpCommand.cc:146
+20220913 03:15:45.509136Z 129481 INFO  PUSH : 3 / 3 clients succeess! - lkpCommand.cc:164
