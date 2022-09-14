@@ -3,7 +3,6 @@ lkp-mirror
 workspace
 .vscode
 build
-src/muduo
 src/build
 log/*
 result/remote/*
