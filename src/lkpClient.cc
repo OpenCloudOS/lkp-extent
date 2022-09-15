@@ -6,9 +6,9 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
       seconds_(seconds),
       kBufSize_(64 * 1024),
       dispatcher_(bind(&lkpClient::onUnknownMsg, this,
-                       boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
+                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
       codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
-                  boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
+                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
       /* 高速缓冲区使用变量，日志文件使用*/
       flushInterval_(3),
@@ -35,17 +35,17 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
 
     //绑定业务回调函数
     dispatcher_.registerMessageCallback<lkpMessage::Command>(bind(&lkpClient::onCommandMsg,
-                                                                  this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+                                                                  this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     dispatcher_.registerMessageCallback<lkpMessage::File>(bind(&lkpClient::onFileMsg,
-                                                               this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+                                                               this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     //绑定新连接请求回调函数
     client_.setConnectionCallback(
-        bind(&lkpClient::onConnection, this, boost::placeholders::_1));
+        bind(&lkpClient::onConnection, this, std::placeholders::_1));
     //绑定client的信息接收回调函数到lkpCodec
     client_.setMessageCallback(
         bind(&lkpCodec::onMessage, &codec_,
-             boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     //绑定定时器产生心跳包
     loop_->runEvery(seconds_, std::bind(&lkpClient::onTimer, this));
@@ -259,7 +259,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
     fileMessage.set_first_patch(true);
     fileMessage.set_content(buf);
 
-    conn->setWriteCompleteCallback(bind(&lkpClient::onWriteComplete, this, boost::placeholders::_1)); //发完一次后继续发
+    conn->setWriteCompleteCallback(bind(&lkpClient::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
     SendToServer(fileMessage);
 }
 

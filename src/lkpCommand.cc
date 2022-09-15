@@ -70,23 +70,23 @@ public:
           client_(loop, InetAddress("127.0.0.1", port), "lkpCmdClient"),
           commandToSend_(commandToSend),
           dispatcher_(bind(&lkpCmdClient::onUnknownMsg, this,
-                           boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3)),
+                           std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
           codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
-                      boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3))
+                      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     {
         muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
 
         //绑定业务回调函数
         dispatcher_.registerMessageCallback<lkpMessage::Return>(bind(&lkpCmdClient::onReturnMsg,
-                                                                     this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+                                                                     this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
         //绑定新连接请求回调函数
         client_.setConnectionCallback(
-            bind(&lkpCmdClient::onConnection, this, boost::placeholders::_1));
+            bind(&lkpCmdClient::onConnection, this, std::placeholders::_1));
         //绑定client的信息接收回调函数到lkpCodec
         client_.setMessageCallback(
             bind(&lkpCodec::onMessage, &codec_,
-                 boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
         client_.enableRetry();
     }

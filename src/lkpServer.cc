@@ -57,11 +57,11 @@ lkpServer::lkpServer(EventLoop *loop,
 
     //绑定新连接请求回调函数
     server_.setConnectionCallback(
-        bind(&lkpServer::onConnection, this, boost::placeholders::_1));
+        bind(&lkpServer::onConnection, this, std::placeholders::_1));
 
     //绑定lkpCodec接收server新消息的回调函数，解析后形成正确类型的message
     server_.setMessageCallback(
-        bind(&lkpCodec::onMessage, &codec_, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+        bind(&lkpCodec::onMessage, &codec_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     
 
@@ -192,7 +192,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
         fileMessage.set_first_patch(true);
         fileMessage.set_content(buf);
 
-        conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, boost::placeholders::_1)); //发完一次后继续发
+        conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
         SendToClient(fileMessage, conn);
     }
     //广播
@@ -226,7 +226,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
             fileMessage.set_first_patch(true);
             fileMessage.set_content(buf);
 
-            conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, boost::placeholders::_1)); //发完一次后继续发
+            conn->setWriteCompleteCallback(bind(&lkpServer::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
             SendToClient(fileMessage, conn);
         }
     }
