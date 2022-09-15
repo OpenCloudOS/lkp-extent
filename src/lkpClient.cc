@@ -5,9 +5,9 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
       client_(loop, serverAddr, "lkpClient"),
       seconds_(seconds),
       kBufSize_(64 * 1024),
-      dispatcher_(bind(&lkpClient::onUnknownMsg, this,
+      dispatcher_(std::bind(&lkpClient::onUnknownMsg, this,
                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
-      codec_(bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
+      codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
       /* 高速缓冲区使用变量，日志文件使用*/
@@ -34,17 +34,17 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
     latch_.wait();   //等待后端线程threadFunc启动，否则服务器不能执行其他动作
 
     //绑定业务回调函数
-    dispatcher_.registerMessageCallback<lkpMessage::Command>(bind(&lkpClient::onCommandMsg,
+    dispatcher_.registerMessageCallback<lkpMessage::Command>(std::bind(&lkpClient::onCommandMsg,
                                                                   this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    dispatcher_.registerMessageCallback<lkpMessage::File>(bind(&lkpClient::onFileMsg,
+    dispatcher_.registerMessageCallback<lkpMessage::File>(std::bind(&lkpClient::onFileMsg,
                                                                this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     //绑定新连接请求回调函数
     client_.setConnectionCallback(
-        bind(&lkpClient::onConnection, this, std::placeholders::_1));
+        std::bind(&lkpClient::onConnection, this, std::placeholders::_1));
     //绑定client的信息接收回调函数到lkpCodec
     client_.setMessageCallback(
-        bind(&lkpCodec::onMessage, &codec_,
+        std::bind(&lkpCodec::onMessage, &codec_,
              std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     //绑定定时器产生心跳包
