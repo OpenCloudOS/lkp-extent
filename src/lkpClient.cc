@@ -131,6 +131,9 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
             if (execlp("lkp-ctl", "lkp-ctl", "update", NULL) < 0)
             {
                 perror("Error on UPDATE exec:");
+                ACK.set_status(false);
+                ACK.set_ack_message("ERROR 12: Command UPDATE cannot run!");
+                SendToServer(ACK);
                 exit(0);
             }
         }
@@ -230,7 +233,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 {
     nodeID_ = message->node_id();
 
-    string fileName = ROOT_DIR + "results/local/" +  message->testcase();
+    string fileName = ROOT_DIR + "results/local/" + "result.tar";
 
     LOG_INFO << "Result fileName:" << fileName;
 
@@ -258,6 +261,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
     fileMessage.set_patch_len(nread);
     fileMessage.set_first_patch(true);
     fileMessage.set_content(buf);
+    fileMessage.set_file_name("result.tar");
 
     conn->setWriteCompleteCallback(bind(&lkpClient::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
     SendToServer(fileMessage);
@@ -346,7 +350,7 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
         nodeID_ = message->node_id();
         fileName_ = ROOT_DIR + "/testcases/" + message->file_name();
         LOG_INFO << "fileName_:" << fileName_;
-
+        
         fileSize_ = message->file_size();
         fp_ = ::fopen(fileName_.c_str(), "wb");
         assert(fp_);

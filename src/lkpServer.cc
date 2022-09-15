@@ -191,6 +191,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
         fileMessage.set_patch_len(nread);
         fileMessage.set_first_patch(true);
         fileMessage.set_content(buf);
+        fileMessage.set_file_name(message->testcase());
 
         conn->setWriteCompleteCallback(std::bind(&lkpServer::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
         SendToClient(fileMessage, conn);
@@ -461,7 +462,7 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
     else if (message->first_patch())
     {
         int nodeID = message->node_id();
-        fileNameMap_[conn] = ROOT_DIR + "/results/remote/node" + std::to_string(nodeID) + "/" + message->file_name();
+        fileNameMap_[conn] = ROOT_DIR + "/results/remote/node" + std::to_string(nodeID) + "-" + message->file_name();
         LOG_INFO<<"fileName_:"<<fileNameMap_[conn];
 
         fileSizeMap_[conn] = message->file_size();
