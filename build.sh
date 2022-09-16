@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 ROOT_DIR=$(pwd)
 echo $ROOT_DIR
@@ -22,5 +22,6 @@ mkdir -p /usr/local/bin
 ln -sf $(pwd)/bin/lkp-ctl /usr/local/bin/lkp-ctl
 
 echo "lkp-extent is ready!"
+echo "Use 'lkp-ctl init' and 'lkp-ctl start server/client' to start lkp-extent"
 
 

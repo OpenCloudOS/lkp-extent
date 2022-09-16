@@ -133,7 +133,6 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
             else
             {
                 CmdConnection_->shutdown();
-                // printf("lkpServer Error: Has connected to a CmdClient!\n");
                 LOG_INFO<<"lkpServer Error: Has connected to a CmdClient!";
             }
         }
@@ -152,7 +151,11 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
     }
     else
     {
-        // LocalConnections::instance().erase(conn);
+        WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
+        EntryPtr entry(weakEntry.lock()); 
+        int nodeID = entry->Entry_nodeID;
+        clientPool_.del(nodeID);
+        LOG_INFO<<"Client_pool: A connection unconnected, Del nodeID:"<<nodeID;
     }
 }
 
@@ -226,6 +229,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
             fileMessage.set_patch_len(nread);
             fileMessage.set_first_patch(true);
             fileMessage.set_content(buf);
+            fileMessage.set_file_name(message->testcase());
 
             conn->setWriteCompleteCallback(std::bind(&lkpServer::onWriteComplete, this, std::placeholders::_1)); //发完一次后继续发
             SendToClient(fileMessage, conn);

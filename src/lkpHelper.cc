@@ -26,12 +26,12 @@ bool lkpConfigInit(std::map<string,string> & m, lkpConfig & myConfig, const stri
 
     const string CONFIG_PATH = ROOT_DIR + "/lkp-extent.config";
     if(!ReadConfig(CONFIG_PATH, m)){
-        std::cout << "lkp-ctl init failed: Cannot read config file!" << std::endl;
+        std::cout << "lkp-ctl service start failed: Cannot read config file!" << std::endl;
         exit(EXIT_FAILURE);
     }
     for(string config:ConfigString){
         if(!m.count(config)){
-            cout << " miss configure: " << config << endl;
+            cout << "lkp-ctl service start failed: miss configure: " << config << endl;
             return false;
         }
     }
@@ -45,7 +45,6 @@ bool lkpConfigInit(std::map<string,string> & m, lkpConfig & myConfig, const stri
     myConfig.ServerPort          = stoi(m.at(ConfigString[7]));
     myConfig.HeartBeatTime        = stoi(m.at(ConfigString[8]));
     myConfig.ClientPushPath      = m.at(ConfigString[9]);
-    cout << "lkp-extent init succesfully!" << endl;
 }
 
 //commandID和"UPDATE"等字符串的映射关系

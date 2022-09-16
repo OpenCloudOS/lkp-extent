@@ -46,15 +46,14 @@ current_run(){
     fi
 }
 
-main () {
-    lkp_log2f LOG_INF "$PNAME run $@\n"
-    if [ $NODE_ALL -ne 0 ]; then
-        lkp_show "Function(all node) is not implemented"
-    elif [ $NODE_ID -ne 0 ]; then
-        lkp_show "Function(specify node) is not implemented"
-    else
-        current_run $@
-    fi
-}
+if [ ! -f $ROOT_DIR/testcases/$testcase ]; then
+lkp_show "Error: push testcase does not exist!"
+exit 0
+fi
 
-main $testcases
+if [ $LOCAL_FLAG -eq 1 ] ; then
+    current_run $@
+else
+    $SRC_PATH/build/lkp_extent_CLI RUN $testcase $NODE_ID $VM_CNT $ROOT_DIR
+fi
+

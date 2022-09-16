@@ -22,8 +22,9 @@ usage() {
 }
 
 export VM_CNT=0
-export NODE_ID=0
-export NODE_ALL=0
+export NODE_ID=-1
+export NODE_ALL=1
+export LOCAL_FLAG=1
 export ROOT_DIR=$(dirname $(dirname $(readlink -e -v $0)))
 
 source $ROOT_DIR/lib/env.sh
@@ -34,8 +35,8 @@ while getopts ":i:c:dha" opt; do
     case $opt in
     d) set -x;;
     c) export VM_CNT=$OPTARG;;
-    i) export NODE_ID=$OPTARG;;
-    a) export NODE_ALL=1;;
+    i) export NODE_ID=$OPTARG;export NODE_ALL=0;LOCAL_FLAG=0;;
+    a) export NODE_ALL=1;LOCAL_FLAG=0;;
     h) usage $PROGRAM && exit 1;;
     ?) usage $PROGRAM && exit 1;;
     esac

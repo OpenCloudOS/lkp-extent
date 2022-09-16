@@ -87,8 +87,9 @@ public:
         client_.setMessageCallback(
             std::bind(&lkpCodec::onMessage, &codec_,
                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        connection_ = nullptr;
+        loop_->runEvery(2, std::bind(&lkpCmdClient::onTimer, this));
 
-        client_.enableRetry();
     }
 
     //连接服务器
@@ -130,10 +131,20 @@ private:
         }
         else
         {
-            // need do something?
+            connection_.reset();
+            connection_ = nullptr;
+            printf("lkp-extent service error: server unconnected!\n");
         }
     }
 
+    void onTimer()
+    {
+    if(!connection_){
+        printf("lkp-extent service error: Cannot find lkp-server!\n");
+        exit(0);
+        }
+    }
+    
     //收到Server的command运行结果return，打印return到terminal
     void onReturnMsg(const TcpConnectionPtr &conn, const ReturnPtr &message, Timestamp time)
     {
@@ -142,7 +153,6 @@ private:
         if(!lkpEnumToCmds(myCommandEnum, myCommandString))
             return;
         
-        //printf("lkpCommand: Receive a return message, command type: %s!\n", myCommandString.c_str());
         LOG_INFO<<"lkpCommand: Receive a return message, command type:"<<myCommandString;
 
         if(myCommandEnum == lkpMessage::LIST){

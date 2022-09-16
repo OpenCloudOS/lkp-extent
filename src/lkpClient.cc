@@ -11,6 +11,7 @@ lkpClient::lkpClient(EventLoop *loop, const InetAddress &serverAddr, int seconds
                   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
 
       /* 高速缓冲区使用变量，日志文件使用*/
+      connection_(nullptr),
       flushInterval_(3),
       running_(false),
       rollSize_(500 * 1000 * 1000),
@@ -65,7 +66,6 @@ lkpClient::~lkpClient()
 void lkpClient::connect()
 {
     client_.connect();
-    printf("lkp-extent client init succesfully!\n");
 }
 
 //断开与服务器的连接
@@ -83,12 +83,13 @@ void lkpClient::onConnection(const TcpConnectionPtr &conn)
     if (conn->connected())
     {
         connection_ = conn;
-        printf("connect success!\n");
+        std::cout << "Continue as a daemon process, pid is " << getpid() << std::endl;
     }
     else
     {
         connection_.reset();
-        printf("cannot connect\n");
+        connection_ = nullptr;
+        LOG_INFO << "lkp-ctl client unconnected !!!";
     }
 }
 
@@ -158,21 +159,32 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
 
     case lkpMessage::RUN:
     {
-        char *testname = (char*)(message->testcase().data());
-        char *runArgv[6] = {(char*)"lkp-ctl",(char*)"run", testname};
-        unsigned int dockerNum = message->docker_num();
-        if (message->docker_num())
-        {
-            runArgv[3] = (char*)("-c ");
-            char dockerNumChar[20];
-            sprintf(dockerNumChar, "%u", message->docker_num());
-            runArgv[4] = dockerNumChar;
-            runArgv[5] = NULL;
-        }
-        runArgv[3] = NULL;
-
         pid_t pid;
-        if (pid < 0)
+        string testname = message->testcase();
+        unsigned int dockerNum = message->docker_num();
+        string dockerNumString = std::to_string(dockerNum);
+        pid = fork();
+        if (pid == 0)
+        {
+            //子进程执行lkp-ctl run (-c vm_cnt) testcase
+            if (message->docker_num())
+            {
+                if (execlp("lkp-ctl", "lkp-ctl", "-c", dockerNumString.data(), "run", testname.data(), NULL) < 0)
+                {
+                    perror("Error on RUN exec:");
+                    exit(0);
+                }
+            }
+            else
+            {
+                if (execlp("lkp-ctl", "lkp-ctl", "run", testname.data(), NULL) < 0)
+                {
+                    perror("Error on RUN exec:");
+                    exit(0);
+                }
+            }
+        }
+        else if (pid < 0)
         {
             ACK.set_status(false);
             ACK.set_ack_message("ERROR 11: Fork Error!");
@@ -180,14 +192,6 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
             return;
         }
         //开启新进程执行命令
-        if (pid == 0)
-        {
-            if (execvp("lkp-ctl", runArgv) < 0)
-            {
-                perror("Error on RUN exec:");
-                exit(0);
-            }
-        }
         else
         {
             lastPid_ = pid;
@@ -233,7 +237,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 {
     nodeID_ = message->node_id();
 
-    string fileName = ROOT_DIR + "results/local/" + "result.tar";
+    string fileName = ROOT_DIR + "/results/local/result.tar";
 
     LOG_INFO << "Result fileName:" << fileName;
 
@@ -363,14 +367,18 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
 //收到未知数据包的回调函数
 void lkpClient::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
 {
-    printf("Error!\n");
-    LOG_INFO << "Error!";
+    LOG_INFO << "Error: Unknown Message, shut dowm the connect!";
     conn->shutdown();
+    exit(0);
 }
 
 //定期心跳回调函数
 void lkpClient::onTimer()
 {
+    if(!connection_){
+        printf("lkp-ctl client error: Cannot connect!\n");
+        exit(0);
+    }
     lkpMessage::HeartBeat heart;
     heart.set_status(true);
     SendToServer(heart);

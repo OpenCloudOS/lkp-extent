@@ -8,30 +8,34 @@
 
 
 string ROOT_DIR;
+bool isServer = false;
 
 int main(int argc, char *argv[])
 {
     
-    if(argc!=2){
-        std::cout << "lkp-ctl init failed: Wrong argv" << std::endl;
+    if(argc!=3){
+        std::cout << "lkp-ctl service start failed: Wrong argv" << std::endl;
         return 1;
     }
 
     //需要获得lkp-extent的root direction
     ROOT_DIR = string(argv[1]);
+    string ServerNClient = string(argv[2]);
 
     std::map<string,string> configMap;
     lkpConfig MyConfig;
 
     //配置初始化
     lkpConfigInit(configMap, MyConfig, ROOT_DIR);
-    
-    if(!configMap.count("ServerNClient")){
-        std::cout << "lkp-extent int failed: Please set whether Server or Client!" << std::endl;
-        return 1;
-    }
 
-    const bool isServer = ( configMap["ServerNClient"].compare("1")==0 ? true : false);
+    if(ServerNClient.compare("server")==0)
+        isServer = true;
+    else if(ServerNClient.compare("client")==0)
+        isServer = false;
+    else{
+        std::cout << "lkp-ctl service start failed: Not a valid input (server or client)" << std::endl;
+        return 0;
+    }
 
     //创建Server类或client类，开启事件循环并守护运行
     EventLoop loop;
@@ -63,7 +67,6 @@ int main(int argc, char *argv[])
 
         client.connect();
 
-        std::cout << "Continue as a daemon process, pid is " << getpid() << std::endl;
         loop.loop();
     }
     return 0;
