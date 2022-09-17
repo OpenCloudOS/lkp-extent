@@ -88,7 +88,7 @@ public:
             std::bind(&lkpCodec::onMessage, &codec_,
                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         connection_ = nullptr;
-        loop_->runEvery(2, std::bind(&lkpCmdClient::onTimer, this));
+        loop_->runEvery(1, std::bind(&lkpCmdClient::onTimer, this));
 
     }
 
@@ -110,6 +110,7 @@ public:
         if (connection_->connected())
         {
             codec_.send(connection_, messageToSend);
+            TimeOutCounter_ = 0;
         }
         else
         {
@@ -139,20 +140,25 @@ private:
 
     void onTimer()
     {
-    if(!connection_){
+    if(!connection_ || ((connection_)&&!connection_->connected())){
         printf("lkp-extent service error: Cannot find lkp-server!\n");
         exit(0);
         }
+    TimeOutCounter_ ++;
+    if(TimeOutCounter_ > 5){
+        printf("lkp-extent service error: Timeout!\n");
+        exit(0);
+    }
     }
     
     //收到Server的command运行结果return，打印return到terminal
     void onReturnMsg(const TcpConnectionPtr &conn, const ReturnPtr &message, Timestamp time)
     {
+        TimeOutCounter_ = 0;
         lkpMessage::commandID myCommandEnum = message->command();
         string myCommandString;
         if(!lkpEnumToCmds(myCommandEnum, myCommandString))
             return;
-        
         LOG_INFO<<"lkpCommand: Receive a return message, command type:"<<myCommandString;
 
         if(myCommandEnum == lkpMessage::LIST){
@@ -202,6 +208,8 @@ private:
     TcpConnectionPtr connection_;
 
     lkpMessage::Command commandToSend_;
+
+    int TimeOutCounter_ = 0;
 };
 
 int main(int argc, char *argv[])

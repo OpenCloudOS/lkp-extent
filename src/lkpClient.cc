@@ -83,7 +83,9 @@ void lkpClient::onConnection(const TcpConnectionPtr &conn)
     if (conn->connected())
     {
         connection_ = conn;
-        std::cout << "Continue as a daemon process, pid is " << getpid() << std::endl;
+        std::cout << "lkp-extent client init success " << std::endl;
+        if(!daemon(1,0));
+            std::cout << "lkp-extent error: cannot run as daemon!" << std::endl;
     }
     else
     {

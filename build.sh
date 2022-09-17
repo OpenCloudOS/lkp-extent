@@ -4,6 +4,9 @@ set -ex
 ROOT_DIR=$(pwd)
 echo $ROOT_DIR
 
+git submodule init
+git submodule update
+
 #make and install muduo
 cd $ROOT_DIR/src/muduo
 ./build.sh
