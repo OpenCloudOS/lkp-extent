@@ -28,14 +28,9 @@ do_update_current(){
     cd $LKP_PRJ;git pull
 }
 
-main () {
-    if [ $NODE_ALL -ne 0 ]; then
-        lkp_show "Function(all node) is not implemented"
-    elif [ $NODE_ID -ne 0 ]; then
-        lkp_show "Function(specify node) is not implemented"
-    else
-        do_update_current
-    fi
-}
+if [ $LOCAL_FLAG -eq 1 ] ; then
+    do_update_current 
+else
+    $SRC_PATH/build/lkp_extent_CLI UPDATE null $NODE_ID 0 $ROOT_DIR
+fi
 
-main $@

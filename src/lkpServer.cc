@@ -128,6 +128,7 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
             if (!hasCmdConnected_)
             {
                 CmdConnection_ = conn;
+                hasCmdConnected_ = true;
                 LOG_INFO<<"lkpServer: Has connected to cmdClient!";
             }
             else
@@ -151,12 +152,19 @@ void lkpServer ::onConnection(const TcpConnectionPtr &conn)
     }
     else
     {
-        //断开交给心跳做
-        // WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
-        // EntryPtr entry(weakEntry.lock());
-        // int nodeID = entry->Entry_nodeID;
-        // clientPool_.del(nodeID);
-        // LOG_INFO<<"Client_pool: A connection unconnected, Del nodeID:"<<nodeID;
+        if(hasCmdConnected_){
+            //取消cmd标志
+            hasCmdConnected_ = false;
+        }
+        else{
+            //从clientpool中删除
+            WeakEntryPtr weakEntry(boost::any_cast<WeakEntryPtr>(conn->getContext())); //利用Context取出弱引用
+            EntryPtr entry(weakEntry.lock());
+            int nodeID = entry->Entry_nodeID;
+            clientPool_.del(nodeID);
+            LOG_INFO<<"Client_pool: A connection unconnected, Del nodeID:"<<nodeID;
+        }
+        
     }
 }
 

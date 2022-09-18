@@ -23,3 +23,4 @@ while getopts ":hd" opt; do
     esac
 done
 
+lkp_show "Stop not support now"

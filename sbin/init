@@ -15,7 +15,6 @@ source $ROOT_DIR/lib/env.sh
 source $ROOT_DIR/lib/log.sh
 source $ROOT_DIR/lib/init.sh
 source $ROOT_DIR/lib/lkp.sh
-source $ROOT_DIR/lib/muduo.sh
 
 # parse parameters
 while getopts ":hd" opt; do
