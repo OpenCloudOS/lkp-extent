@@ -34,32 +34,32 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 
     `$ lkp-ctl update` # 更新本机的测试组件，包括lkp-extent和lkp两个repo
 
-    `$ lkp-ctl update -a` # 更新所有node的测试组件
+    `$ lkp-ctl -a update` # 更新所有node的测试组件
 
-    `$ lkp-ctl update -i nodeid` #更新id号是nodeid的node的测试组件
+    `$ lkp-ctl -i nodeid update ` #更新id号是nodeid的node的测试组件
 
  3. 下发测试指令
 
     `$ lkp-ctl run testcase` # 本机执行testcase
     
-    `$ lkp-ctl run testcase -a ` # 所有远程node执行testcase
+    `$ lkp-ctl -a run testcase ` # 所有远程node执行testcase
 
-    `$ lkp-ctl run testcase -i nodeid ` # id是nodeid的服务器执行testcase
+    `$ lkp-ctl -i nodeid run testcase ` # id是nodeid的服务器执行testcase
 
-    `$ lkp-ctl run testcase -i nodeid -c containerCount` # id是nodeid的服务器开containerCount个容器，并在容器里面执行testcase
+    `$ lkp-ctl i nodeid -c containerCount run testcase -` # id是nodeid的服务器开containerCount个容器，并在容器里面执行testcase
 
 
  4. 推送自定义测试case
 
-    `$ lkp-ctl push testscript -a` # 向所有测试机推送名字为testscript的脚本
+    `$ lkp-ctl -a push testscript ` # 向所有测试机推送名字为testscript的脚本
 
-    `$ lkp-ctl push testscript -i nodeid ` # 向指定测试机推送名字为testscript的脚本
+    `$ lkp-ctl -i nodeid push testscript ` # 向指定测试机推送名字为testscript的脚本
 
  5. 收集测试结果
 
-    `$ lkp-ctl result -a` # 收集所有测试机的测试结果
+    `$ lkp-ctl -a result ` # 收集所有测试机的测试结果
 
-    `$ lkp-ctl result -i nodeid ` # 收集指定的测试机的测试结果
+    `$ lkp-ctl -i nodeid result ` # 收集指定的测试机的测试结果
 
 虽然lkp-extent是[LKP](https://github.com/intel/lkp-tests "LKP")的一个扩展功能，但是该repo并不会对[LKP](https://github.com/intel/lkp-tests "LKP")工程本身进行修改，他可以在最大的程度上使用最新的[LKP](https://github.com/intel/lkp-tests "LKP")，而lkp-extent上面新增的测试case也只会以overlay的方式叠加到原生态的LKP工程上。
 
