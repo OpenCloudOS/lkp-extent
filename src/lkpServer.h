@@ -225,4 +225,5 @@ private:
 };
 extern lkpServer *g_asyncLog_server;
 void asyncOutput_server(const char *msg, int len);
+extern int childNum;
 #endif

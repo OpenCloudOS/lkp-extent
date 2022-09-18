@@ -156,5 +156,7 @@ extern lkpClient *g_asyncLog_client;
 
 void asyncOutput_client(const char *msg, int filelen);
 
+extern int childNum;
+
 #endif
 

@@ -83,9 +83,9 @@ void lkpClient::onConnection(const TcpConnectionPtr &conn)
     if (conn->connected())
     {
         connection_ = conn;
-        std::cout << "lkp-extent client init success " << std::endl;
-        if(!daemon(1,0));
-            std::cout << "lkp-extent error: cannot run as daemon!" << std::endl;
+        std::cout << "lkp-extent client connect success " << std::endl;
+        // if(!daemon(1,0));
+        //     std::cout << "lkp-extent error: cannot run as daemon!" << std::endl;
     }
     else
     {
@@ -104,7 +104,7 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
     int status = 0;
 
     //如果上一个命令还没有运行完，现场尝试回收子进程，如果回收失败，说明上一条命令此时还不可能结束
-    if (lastPid_ > 0 && waitpid(lastPid_, &status, WNOHANG) == 0)
+    if (childNum >= 1)
     {
         lastStatus_ = WIFEXITED(status);
         ACK.set_status(false);
@@ -143,18 +143,10 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
         else
         {
             lastPid_ = pid;
-            if (waitpid(pid, &status, WNOHANG) == -1)
-            {
-                ACK.set_status(false);
-                ACK.set_ack_message("ERROR 12: Command UPDATE cannot run!");
-                SendToServer(ACK);
-            }
-            else
-            {
-                lastStatus_ = WIFEXITED(status);
-                ACK.set_status(true);
-                SendToServer(ACK);
-            }
+
+            lastStatus_ = WIFEXITED(status);
+            ACK.set_status(true);
+            SendToServer(ACK);
         }
         break;
     }
@@ -197,18 +189,10 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
         else
         {
             lastPid_ = pid;
-            if (waitpid(pid, &status, WNOHANG) == -1)
-            {
-                ACK.set_status(false);
-                ACK.set_ack_message("ERROR 12: Command RUN cannot run!");
-                SendToServer(ACK);
-            }
-            else
-            {
-                lastStatus_ = WIFEXITED(status);
-                ACK.set_status(true);
-                SendToServer(ACK);
-            }
+
+            lastStatus_ = WIFEXITED(status);
+            ACK.set_status(true);
+            SendToServer(ACK);
         }
         break;
     }
@@ -385,10 +369,6 @@ void lkpClient::onTimer()
     heart.set_status(true);
     SendToServer(heart);
     int status;
-    if (lastPid_ > 0 && waitpid(lastPid_, &status, WNOHANG) != 0)
-    {
-        lastPid_ = 0;
-    }
     lastStatus_ = WIFEXITED(status);
 }
 
