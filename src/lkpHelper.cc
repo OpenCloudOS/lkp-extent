@@ -111,6 +111,7 @@ int lkpClientPool::add(TcpConnectionPtr conn)
         // printf("新客户端加入，nodeID is:%d\n", nodeID);
         // LOG_INFO<<"新客户端加入，nodeID is:"<<nodeID;
     }
+
     return nodeID;
 }
 

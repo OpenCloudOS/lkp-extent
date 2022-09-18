@@ -260,7 +260,9 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 //每次发送64kb
 void lkpClient::onWriteComplete(const TcpConnectionPtr &conn)
 {
+    printf("onWriteComplete 1\n");
     const FilePtr &fp = boost::any_cast<const FilePtr &>(conn->getContext());
+    printf("onWriteComplete 2\n");
 
     char buf[kBufSize_];
     size_t nread = ::fread(buf, 1, sizeof(buf), get_pointer(fp));

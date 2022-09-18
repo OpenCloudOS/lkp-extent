@@ -4,6 +4,7 @@
 #define COMMENT_CHAR '#'
 
 #include <string>
+#include <unordered_map>
 #include <map>
 #include "muduo/net/Buffer.h"
 #include "muduo/net/TcpConnection.h"
@@ -76,6 +77,7 @@ public:
 private:
     //client pool nodeID -- cfd
     std::map<int, TcpConnectionPtr> connections_;
+    
     int nodeCount_;
     std::set<int> idleNodeID;//存放当前闲置的nodeID
 
