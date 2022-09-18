@@ -200,8 +200,6 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
     case lkpMessage::RESULT:
     {
         onResult(conn, message);
-        ACK.set_status(true);
-        SendToServer(ACK);
         break;
     }
 
@@ -246,7 +244,6 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 
     lkpMessage::File fileMessage;
     fileMessage.set_file_type(lkpMessage::File::RESULT);
-    fileMessage.set_file_name(std::to_string(nodeID_));
     fileMessage.set_file_size(fileSize);
     fileMessage.set_patch_len(nread);
     fileMessage.set_first_patch(true);
