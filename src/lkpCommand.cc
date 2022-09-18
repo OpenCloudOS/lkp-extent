@@ -37,6 +37,10 @@
 #include "muduo/base/BlockingQueue.h"
 #include "muduo/base/BoundedBlockingQueue.h"
 #include "muduo/base/CountDownLatch.h"
+#include "muduo/base/Logging.h"
+#include "muduo/base/LogStream.h"
+#include "muduo/base/LogFile.h"
+#include "muduo/base/AsyncLogging.h"
 #include <boost/circular_buffer.hpp>
 
 #include "lib/lkpProto.pb.h"
@@ -48,6 +52,14 @@ using namespace muduo;
 using namespace muduo::net;
 
 typedef std::shared_ptr<lkpMessage::Return> ReturnPtr;
+
+off_t kRollSize = 500 * 1000 * 1000;
+muduo::AsyncLogging *g_asyncLog = NULL;
+//前端写日志时调用
+void asyncOutput(const char *msg, int filelen)
+{
+    g_asyncLog->append(msg, filelen);
+}
 
 
 class lkpCmdClient : boost::noncopyable
@@ -62,7 +74,7 @@ public:
           codec_(std::bind(&lkpDispatcher::onProtobufMessage, &dispatcher_,
                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     {
-
+        muduo::Logger::setOutput(asyncOutput);//LOG_INFO调用asyncOutput
         //绑定业务回调函数
         dispatcher_.registerMessageCallback<lkpMessage::Return>(std::bind(&lkpCmdClient::onReturnMsg,
                                                                      this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -140,9 +152,11 @@ private:
     //收到Server的command运行结果return，打印return到terminal
     void onReturnMsg(const TcpConnectionPtr &conn, const ReturnPtr &message, Timestamp time)
     {
+        
         TimeOutCounter_ = 0;
         lkpMessage::commandID myCommandEnum = message->command();
         string myCommandString;
+        LOG_INFO<<"lkpCommand: Receive a return message, command type:"<<myCommandString;
         if(!lkpEnumToCmds(myCommandEnum, myCommandString))
             return;
 
@@ -249,7 +263,11 @@ int main(int argc, char *argv[])
     }
 
     const string myPath = string(argv[5]);
-
+    //log
+    muduo::AsyncLogging log( myPath + "/log/CLI_logfile", kRollSize);
+    log.start();
+    g_asyncLog = &log;
+    
     lkpCmdClient client(&loop, port, commandToSend);
     client.connect();
     loop.loop();
