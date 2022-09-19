@@ -106,7 +106,7 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
     {
         lastStatus_ = WIFEXITED(status);
         ACK.set_status(false);
-        ACK.set_ack_message("ERROR 10: Command " + lastCmdString_ + " is still ruunning!");
+        ACK.set_ack_message("ERROR 10: Command " + lastCmdString_ + " is still running!");
         SendToServer(ACK);
         return;
     }
@@ -233,7 +233,13 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
     FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
     if (!fp)
     {
+        lkpMessage::CommandACK ACK;
+        ACK.set_command(message->command());
+        ACK.set_node_id(nodeID_);
         perror("lkp-ctl open local result file error: \n");
+        ACK.set_status(false);
+        ACK.set_ack_message("ERROR 14: No Result File in client");
+        SendToServer(ACK);
         return;
     }
 
@@ -302,8 +308,6 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
         //检查文件是否完整
         if (recvSize != fileSize_)
         {
-            // printf("recvSize:%d,fileSize_:%d\n", recvSize, fileSize_);
-            // printf("file is not complete!\n");
             LOG_INFO << "recvSize:" << recvSize << ",fileSize_:" << fileSize_;
             LOG_INFO << "file is not complete!";
 

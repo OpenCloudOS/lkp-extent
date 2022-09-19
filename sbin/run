@@ -35,6 +35,8 @@ testcases="$@"  # testcase group
 
 do_local_test(){
     lkp_run_testcases "$LKP_DIR/jobs" "$JOB_WORKDIR" "$@"
+    tar -cvf $JOB_WORKDIR/result.tar $JOB_WORKDIR/result/*
+    cp $JOB_WORKDIR//result.tar $ROOT_DIR/results/local/
 }
 
 current_run(){

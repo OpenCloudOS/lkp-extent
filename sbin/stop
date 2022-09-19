@@ -23,4 +23,9 @@ while getopts ":hd" opt; do
     esac
 done
 
-lkp_show "Stop not support now"
+set -e
+for pid in $(ps -ef | grep -E "lkp-extent/src/build|lkp-tests" | awk '$8 !~ /grep/,/stop/ {print $2}');do
+    kill $pid
+done
+
+lkp_show "lkp-exent service stop!"

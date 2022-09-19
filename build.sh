@@ -24,6 +24,11 @@ make
 mkdir -p /usr/local/bin
 ln -sf $ROOT_DIR/bin/lkp-ctl /usr/local/bin/lkp-ctl
 
+mkdir -p $ROOT_DIR/log
+mkdir -p $ROOT_DIR/results/local
+mkdir -p $ROOT_DIR/results/remote
+mkdir -p $ROOT_DIR/testcases
+
 set +ex
 
 echo "lkp-extent is ready!"
