@@ -15,6 +15,7 @@ cd $ROOT_DIR/src/muduo
 cp -r $ROOT_DIR/src/build/release-install-cpp11/include/muduo /usr/include
 cp $ROOT_DIR/src/build/release-install-cpp11/lib/* /usr/lib
 
+mkdir -p /usr/include/muduo/net/protorpc/
 cp  $ROOT_DIR/src/muduo/muduo/net/protorpc/google-inl.h /usr/include/muduo/net/protorpc/
 #make lkp-extent
 cd $ROOT_DIR/src
