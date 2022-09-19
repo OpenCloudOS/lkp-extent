@@ -27,7 +27,7 @@ docker_create_image() {
 
 # - $1: docker_images
 # - $2: container count
-# 直接使用创建好的image运行lkp测试，目前的image只安装了ebizzy的依赖项
+# 直接使用创建好的image运行lkp测试，目前的image只安装了ebizzy的依赖项，但是docker里的脚本也可以自动安装所需依赖
 docker_create_container (){
     local container_flag
     local docker_images=$1
@@ -59,7 +59,6 @@ docker_test_container (){
     container_flag="--privileged=$DOCKER_HAS_ROOT -dit"
     for id in `docker ps | sed '1 d' | awk '{print $1 }'`; do
         lkp_log2f LOG_INF "docker $i exec $id $testcase\n"
-        docker exec $container_flag $id /bin/bash -C "/home/lkp-extent.sh $testcase"
-        docker stop $id
+        docker exec $container_flag $id /bin/bash -c "/lkp-tests/lkp-extent.sh $testcase"
     done
 }
