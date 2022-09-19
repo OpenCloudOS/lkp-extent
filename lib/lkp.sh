@@ -39,8 +39,7 @@ lkp_run_testcase (){
     done
 
     # add to results path for use
-    tar -cvf result.tar $LKP_DIR/jobs/result/*
-    cp result.tar $ROOT_DIR/results/local/
+    
 }
 
 # - $1: lkp jobs directory
@@ -61,5 +60,7 @@ lkp_run_testcases (){
         lkp_run_testcase "$job"
         shift 1
     done
+    tar -cvf result.tar ./jobs/result/*
+    cp ./jobs/result.tar $ROOT_DIR/results/local/
     lkp_log2f LOG_INF "lkp run-jobs [$@]"
 }

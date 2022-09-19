@@ -210,8 +210,6 @@ private:
 int main(int argc, char *argv[])
 {
     EventLoop loop;
-
-    const uint16_t port = 7777;
     lkpMessage::Command commandToSend;
 
     // argv style, argc = 4
@@ -263,11 +261,18 @@ int main(int argc, char *argv[])
     }
 
     const string myPath = string(argv[5]);
+    std::map<string,string> configMap;
+    lkpConfig CmdConfig;
+
+    //配置初始化
+    lkpConfigInit(configMap, CmdConfig, myPath);
+
+    const uint16_t port = CmdConfig.ServerListenPort;
     //log
     muduo::AsyncLogging log( myPath + "/log/CLI_logfile", kRollSize);
     log.start();
     g_asyncLog = &log;
-    
+
     lkpCmdClient client(&loop, port, commandToSend);
     client.connect();
     loop.loop();

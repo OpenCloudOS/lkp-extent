@@ -16,7 +16,7 @@ void handleChildExit(int sig){
     int childStatus;
     childNum = std::max(childNum - 1,0);
     //一旦被唤醒，就持续尝试回收子进程
-    printf("try to handleChildExit\n");
+    printf("lkp-ctl: child process exit here\n");
     while(waitpid(-1,&childStatus,WNOHANG) != -1);
 }
 
@@ -80,8 +80,6 @@ int main(int argc, char *argv[])
         muduo::Logger::setOutput(asyncOutput_server); //LOG_INFO调用asyncOutput_client
 
         Server.start(); 
-
-        std::cout << "lkp-extent server start success! " << std::endl;
         
         loop.loop();
     }

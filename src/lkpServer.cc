@@ -184,7 +184,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
         FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
         if (!fp)
         {
-            perror("open file fail!!\n");
+            perror("lkp-ctl open push file error");
             return;
         }
 
@@ -219,7 +219,7 @@ void lkpServer::pushToClient(const RecvCommandPtr &message)
             FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
             if (!fp)
             {
-                perror("open file fail!!\n");
+                perror("lkp-ctl open push file error");
                 return;
             }
 
@@ -264,7 +264,6 @@ void lkpServer ::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr
     lkpMessage::commandID myCommand = message->command();
     string myCommandString;
     lkpEnumToCmds(myCommand, myCommandString);
-    // printf("Recv a command: %s\n", myCommandString.c_str());
     LOG_INFO<<"Recv a command:"<<myCommandString;
     
     if (!message->send_to_all() && message->node_id()>=0 && !clientPool_.getConn(message->node_id())){
@@ -348,7 +347,6 @@ void lkpServer ::onWriteComplete(const TcpConnectionPtr &conn)
 
         SendToClient(fileMessage,conn);
 
-        // printf("push testcase to client end!\n");
         LOG_INFO<<"push testcase to client end!";
     }
 }
@@ -508,9 +506,9 @@ void lkpServer ::onHeartBeat(const TcpConnectionPtr &conn, const HeartBeatPtr &m
 //收到未知数据包的回调函数
 void lkpServer ::onUnknownMsg(const TcpConnectionPtr &conn, const MessagePtr &message, Timestamp time)
 {
+    printf("lkp-extent warning: Unknown Message! Shut down the connection\n");
     conn->shutdown();
-    // printf("error! shut down the connection\n");
-    LOG_INFO<<"error! shut down the connectio";
+    LOG_INFO<<"Warning! shut down the connection";
 }
 
 //计时器，前进tail

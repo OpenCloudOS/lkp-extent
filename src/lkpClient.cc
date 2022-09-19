@@ -83,9 +83,7 @@ void lkpClient::onConnection(const TcpConnectionPtr &conn)
     if (conn->connected())
     {
         connection_ = conn;
-        std::cout << "lkp-extent client connect success " << std::endl;
-        // if(!daemon(1,0));
-        //     std::cout << "lkp-extent error: cannot run as daemon!" << std::endl;
+        std::cout << "lkp-extent client: connect success " << std::endl;
     }
     else
     {
@@ -235,7 +233,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
     FILE *fp = ::fopen(fileName.c_str(), "rb"); //打开文件
     if (!fp)
     {
-        perror("open file fail!!\n");
+        perror("lkp-ctl open local result file error: \n");
         return;
     }
 
@@ -259,9 +257,7 @@ void lkpClient::onResult(const TcpConnectionPtr &conn, const RecvCommandPtr &mes
 //每次发送64kb
 void lkpClient::onWriteComplete(const TcpConnectionPtr &conn)
 {
-    printf("onWriteComplete 1\n");
     const FilePtr &fp = boost::any_cast<const FilePtr &>(conn->getContext());
-    printf("onWriteComplete 2\n");
 
     char buf[kBufSize_];
     size_t nread = ::fread(buf, 1, sizeof(buf), get_pointer(fp));
