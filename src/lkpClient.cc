@@ -121,6 +121,7 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
     case lkpMessage::UPDATE:
     {
         pid_t pid = fork();
+        childNum++;
         if (pid < 0)
         {
             ACK.set_status(false);
@@ -158,6 +159,7 @@ void lkpClient::onCommandMsg(const TcpConnectionPtr &conn, const RecvCommandPtr 
         unsigned int dockerNum = message->docker_num();
         string dockerNumString = std::to_string(dockerNum);
         pid = fork();
+        childNum++;
         if (pid == 0)
         {
             //子进程执行lkp-ctl run (-c vm_cnt) testcase

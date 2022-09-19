@@ -23,5 +23,5 @@ while getopts ":hd" opt; do
     esac
 done
 
-$SRC_PATH/build/lkp_extent_CLI PUSH null $NODE_ID 0 $ROOT_DIR
+$SRC_PATH/build/lkp_extent_CLI RESULT null $NODE_ID 0 $ROOT_DIR
 

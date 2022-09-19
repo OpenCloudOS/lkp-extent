@@ -482,7 +482,7 @@ void lkpServer ::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &mess
         FILE *fp = ::fopen(fileNameMap_[conn].c_str(), "wb");
         if (!fp)
         {
-            perror("open file fail!!\n");
+            perror("lkp-ctl receive file error");
             return;
         }
         outputfpMap_[conn] = fp;
