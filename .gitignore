@@ -5,6 +5,6 @@ workspace
 build
 src/build
 log/*
-result/remote/*
-result/local/*
+results/remote/
+results/local/
 etc/dockerimages
