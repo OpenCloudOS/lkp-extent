@@ -4,7 +4,7 @@ source $ROOT_DIR/lib/log.sh
 
 code_init() {
     local dir
-
+    # 在workspace/lkp-tests安装lkp，作为overlay的lower dir(only read， 不影响lkp项目)
     dir=$(dirname $LKP_PRJ)
     [ ! -d $LKP_PRJ ] && {
         mkdir -p $dir
@@ -21,7 +21,7 @@ overlay_init(){
     [ ! -e "$UPPER_DIR" ] && {
         mkdir -p $UPPER_DIR
     }
-
+    #将Upperdir(lkp-mirror)与lowerdir(workspace/lkp-tests)合并挂载到lkp-tests
     mount -t overlay overlay -olowerdir=$LOWER_DIR,upperdir=$UPPER_DIR,workdir=$FSWORKDIR $LKP_DIR -o index=off -o metacopy=off
     [ $? -ne 0 ] && {
         lkp_show "overlayfs init failed"

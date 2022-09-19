@@ -48,7 +48,10 @@ current_run(){
     fi
 }
 
-echo $testcases
+if [ -f $ROOT_DIR/results/local/result.tar ];then
+    rm $ROOT_DIR/results/local/result.tar
+fi
+
 if [ $LOCAL_FLAG -eq 1 ] ; then
     current_run $@
 else

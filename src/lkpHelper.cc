@@ -45,6 +45,7 @@ bool lkpConfigInit(std::map<string,string> & m, lkpConfig & myConfig, const stri
     myConfig.ServerPort          = stoi(m.at(ConfigString[7]));
     myConfig.HeartBeatTime        = stoi(m.at(ConfigString[8]));
     myConfig.ClientPushPath      = m.at(ConfigString[9]);
+    return true;
 }
 
 //commandID和"UPDATE"等字符串的映射关系

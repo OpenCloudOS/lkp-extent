@@ -330,7 +330,7 @@ void lkpClient::onFileMsg(const TcpConnectionPtr &conn, const RecvFilePtr &messa
             ack.set_ack_message("push recv success");
             ack.set_node_id(nodeID_);
             SendToServer(ack);
-            const string copyToJobs = "cp " + fileName_ + " " + ROOT_DIR + "/lkp-tests/jobs";
+            const string copyToJobs = "cp " + fileName_ + " " + ROOT_DIR + "/workspace/lkp-tests/jobs";
             system(copyToJobs.c_str());
             return;
         }
