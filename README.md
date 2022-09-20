@@ -1,13 +1,18 @@
 ![img](images/lkp.png)
 
 # lkp-extent
+
 lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")项目在容器环境下的压力相关测试，从而增加Linux系统的ras特性。目前主要分为如下几个方向：
+
 1. 增加LKP远程管理分发机制 （已完成）
+
 2. 增加LKP对容器环境的测试 （大部分完成）
+
 3. 增加ebpf测试内核的用例  （待完成）
 
 
 ## 1. 项目介绍
+
   虽然lkp-extent是[LKP](https://github.com/intel/lkp-tests "LKP")的一个扩展功能，但是该repo并不会对[LKP](https://github.com/intel/lkp-tests "LKP")工程本身进行修改，他可以在最大的程度上使用最新的[LKP](https://github.com/intel/lkp-tests "LKP")，而lkp-extent上面新增的测试case也只会以overlay的方式叠加到原生态的LKP工程上。
 
   1) 远程管理与分发
@@ -26,6 +31,7 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
   2) 容器环境支持
   
   目前[LKP](https://github.com/intel/lkp-tests "LKP")的测试case更多的是偏向于对Linux内核本身的测试，然而对于容器环境相关的测试则是几乎没有，因此lkp-extent工程会重点研发容器环境相关的测试case，用于打造一个更稳定的容器OS。
+  
   lkp-extent是一个依赖于LKP测试套件的工程，因此lkp-extent工程里面关于容器测试case的写法和[LKP](https://github.com/intel/lkp-tests "LKP")的job写法相同([readme](https://github.com/intel/lkp-tests/blob/master/doc/add-testcase.md "how to"))。在使用过程中，lkp-extent会将自身的测试项overlay到[LKP](https://github.com/intel/lkp-tests "LKP")工程的jobs目录上，这样方便LKP工程进行统一管理。同样在之前提到的，拥有远程管理的基础上，lkp-ctl可以拥有通过配置文件，让多个host在指定时间，指定条件进行自动部署，自动测试和自动返回测试结果的功能。
   
   3) 实现
@@ -59,6 +65,7 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
   2.1 相关依赖  yum install boost-devel cmake
   
   2.2 protobuf安装（使用protobuf 3.0.0离线压缩包，在etc目录下有安装包）
+  
   `./configure --prefix=/usr/local/protobuf`
   
   `make` 
