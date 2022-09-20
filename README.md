@@ -88,6 +88,7 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 
 ## 3. 使用方法
 
+  **使用之前需要在lkp-extent.config配置文件中修改IP、port等配置。**
 
 （1）开启服务，可选择为当前主机开启lkp-extent的client或者server服务
 
