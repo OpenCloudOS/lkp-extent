@@ -97,7 +97,7 @@ lkp-extent项目致力于增加[LKP](https://github.com/intel/lkp-tests "LKP")�
 
   **使用之前需要在lkp-extent.config配置文件中修改IP、port等配置。**
   
-（0）初始化，下载安装lkp项目，配置overlayFS并mount。作为client的节点一定要初始化才能正常lkp-ctl run以及运行docker进行测试。
+（0）初始化，下载安装lkp项目，配置overlayFS并mount。作为client的节点一定要初始化才能正常lkp-ctl run以及运行docker进行测试。lowerdir=$ROOT_DIR/workspace/lkp-tests, upperdir=$ROOT_DIR/lkp-mirror, workdir=$/workspace/tmp, merged_dir=$ROOT_DIR/lkp-tests，lkp-tests也是docker的卷挂载点。
 
   `lkp-ctl init`
 
