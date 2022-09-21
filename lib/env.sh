@@ -30,7 +30,10 @@ DOCKER_PATH=$ROOT_DIR/etc/dockerfile
 
 # docker privilege
 DOCKER_HAS_ROOT=true
-DOCKER_INAME="$(hostname | tr 'A-Z' 'a-z')"
+DOCKER_INAME="lkp-extent-ubuntu-18-wjz"
 
 # job path
 JOB_WORKDIR=$WORKSPACE/jobs
+
+#src path
+SRC_PATH=$ROOT_DIR/src

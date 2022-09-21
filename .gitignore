@@ -1,2 +1,10 @@
 lkp-tests
+lkp-mirror
 workspace
+.vscode
+build
+src/build
+log/*
+results/remote/
+results/local/
+etc/dockerimages

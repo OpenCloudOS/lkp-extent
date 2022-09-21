@@ -1,10 +1,10 @@
 #!/bin/bash
 
-help_doc="update testcase"
+help_doc="start lkp service"
 
 usage() {
     lkp_show "Usage: $PNAME $1 [OPTION]"
-    lkp_print "\nupdate testcase for lkp-extent \n"
+    lkp_print "\nstart lkp server\n"
     lkp_print "\nOptions:\n"
     lkp_print "\t-d enable debug mode\n"
     lkp_print "\t-h list help\n"
@@ -23,14 +23,4 @@ while getopts ":hd" opt; do
     esac
 done
 
-do_update_current(){
-    lkp_show "git update $LKP_PRJ"
-    cd $LKP_PRJ;git pull
-}
-
-if [ $LOCAL_FLAG -eq 1 ] ; then
-    do_update_current 
-else
-    $SRC_PATH/build/lkp_extent_CLI UPDATE null $NODE_ID 0 $ROOT_DIR
-fi
-
+$SRC_PATH/build/lkp_extent $ROOT_DIR $@

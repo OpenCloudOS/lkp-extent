@@ -1,6 +1,6 @@
 #!/bin/bash
 
-help_doc="start lkp server"
+help_doc="start lkp service"
 
 usage() {
     lkp_show "Usage: $PNAME $1 [OPTION]"
@@ -23,8 +23,9 @@ while getopts ":hd" opt; do
     esac
 done
 
-main () {
-    lkp_show "Function(server) is not implemented"
-}
+set -e
+for pid in $(ps -ef | grep -E "lkp-extent/src/build|lkp-tests" | awk '$8 !~ /grep/,/stop/ {print $2}');do
+    kill $pid
+done
 
-main $@
+lkp_show "lkp-exent service stop!"

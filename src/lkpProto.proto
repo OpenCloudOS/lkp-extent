@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package lkpMessage;
+
+enum commandID{
+    UPDATE = 0;      //need no parameter
+    RUN = 1;         //optional: docker_num
+    RESULT = 2;      //need no parameter
+    PUSH = 3;        //required: testcase length
+    LIST = 4;        //only when cmdClinet use
+}
+
+// Command inlcudes UPDATE, RUN, RESULT, PUSH, LIST
+// CmdClient send Command to Server, Server transfer to Clients
+message Command {
+    commandID command = 1;
+    bool send_to_all = 2;
+    string testcase = 3;
+    uint32 docker_num = 4;
+    uint32 tesetcase_len = 5;
+    uint32 node_id = 6;
+}
+
+// File include file informations, for transport testcase and result file
+// between Server and Clients
+message File {
+    enum filetype{
+        TESTCASE = 0;    //Server push testcase to client
+        RESULT = 1;      //Server request result, client send to server
+        END = 2;
+    }
+    filetype file_type = 1;
+    string file_name = 2;
+    uint32 patch_len = 3;
+    uint32 file_size = 4;
+    bool first_patch = 5;
+    bytes content = 6;
+    uint32 node_id = 7;
+}
+
+// Client which received Command should return a CommandACK
+// for Server count whether all nodes run the Command
+message CommandACK {
+    bool status = 1;     
+    commandID command = 2;   //Return for check
+    string ack_message = 3;  //Error message, etc.
+    uint32 node_id = 4;
+}
+
+// Clinets should send HearBeat to maintain the connection
+message HeartBeat {
+    bool status = 1;
+}
+
+// Only when a Client receive a Command::PUSH return a PushACK
+// and Server should start transport testcase
+message PushACK {
+    bool status = 1;
+    string ack_message = 2;
+    uint32 node_id = 3;
+}
+
+// When Server collect all nodes CommandACK or Timeout
+// send Return to lkpCommandClient and printf
+message Return {
+    uint32 client_num = 1;
+    uint32 client_ok_num = 2;
+    commandID command = 3;
+    message NodeInfo{
+        uint32 node_id = 1;
+        string node_msg = 2;
+    }
+    repeated NodeInfo node_info = 4;
+}

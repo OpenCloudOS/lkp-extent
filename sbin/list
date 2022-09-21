@@ -24,7 +24,7 @@ while getopts ":hd" opt; do
 done
 
 main () {
-    lkp_show "Function(list) is not implemented"
+    $SRC_PATH/build/lkp_extent_CLI LIST null -1 0 $ROOT_DIR
 }
 
 main $@

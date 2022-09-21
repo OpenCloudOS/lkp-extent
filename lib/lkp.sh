@@ -37,6 +37,9 @@ lkp_run_testcase (){
     for job in $(ls ${basename}*);do
         $LKP_ELF run $job
     done
+
+    # add to results path for use
+    
 }
 
 # - $1: lkp jobs directory

@@ -23,8 +23,5 @@ while getopts ":hd" opt; do
     esac
 done
 
-main () {
-    lkp_show "Function(result) is not implemented"
-}
+$SRC_PATH/build/lkp_extent_CLI RESULT null $NODE_ID 0 $ROOT_DIR
 
-main $@

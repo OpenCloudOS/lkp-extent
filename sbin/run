@@ -35,6 +35,8 @@ testcases="$@"  # testcase group
 
 do_local_test(){
     lkp_run_testcases "$LKP_DIR/jobs" "$JOB_WORKDIR" "$@"
+    tar -cvf $JOB_WORKDIR/result.tar $JOB_WORKDIR/result/*
+    cp $JOB_WORKDIR//result.tar $ROOT_DIR/results/local/
 }
 
 current_run(){
@@ -46,15 +48,13 @@ current_run(){
     fi
 }
 
-main () {
-    lkp_log2f LOG_INF "$PNAME run $@\n"
-    if [ $NODE_ALL -ne 0 ]; then
-        lkp_show "Function(all node) is not implemented"
-    elif [ $NODE_ID -ne 0 ]; then
-        lkp_show "Function(specify node) is not implemented"
-    else
-        current_run $@
-    fi
-}
+if [ -f $ROOT_DIR/results/local/result.tar ];then
+    rm $ROOT_DIR/results/local/result.tar
+fi
 
-main $testcases
+if [ $LOCAL_FLAG -eq 1 ] ; then
+    current_run $@
+else
+    $SRC_PATH/build/lkp_extent_CLI RUN $testcases $NODE_ID $VM_CNT $ROOT_DIR
+fi
+

@@ -23,8 +23,16 @@ while getopts ":hd" opt; do
     esac
 done
 
-main () {
-    lkp_show "Function(push) is not implemented"
-}
 
-main $@
+testcase="$@"  # testcase group
+
+if [ ! -f $ROOT_DIR/testcases/$testcase ]; then
+lkp_show "Error: push testcase does not exist!"
+exit 0
+fi
+
+$SRC_PATH/build/lkp_extent_CLI PUSH $testcase $NODE_ID 0 $ROOT_DIR
+
+
+
+
