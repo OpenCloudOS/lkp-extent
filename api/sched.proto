@@ -1,0 +1,43 @@
+syntax="proto3";
+package sched;
+
+option go_package="./sched";
+
+
+message TaskMetaData {
+    enum RoleType {
+        RESERVE = 0;
+        HOST  = 1;
+        CONTAINER = 2;
+    }
+
+    string ID = 1;
+    RoleType Role = 2;
+}
+
+// -------------------------------------------------
+// |                API Definition                 |
+// -------------------------------------------------
+message CasePushRequest {
+    string ID = 1;
+    string Name = 2;
+    bytes File = 3;
+}
+
+message CasePushResponse {
+}
+
+message JobRunRequest {
+    string CaseID = 1;
+    string CaseName = 2;
+    repeated TaskMetaData Tasks = 3;
+}
+
+message JobRunResponse {
+}
+
+
+service Sched {
+    rpc CasePush(CasePushRequest) returns(CasePushResponse);
+    rpc JobRun(JobRunRequest) returns(JobRunResponse);
+}

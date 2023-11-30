@@ -1,0 +1,246 @@
+syntax="proto3";
+package cli;
+
+option go_package="./cli";
+
+
+// -------------------------------------------------
+// |             Metadata Definition               |
+// -------------------------------------------------
+message NodeMetadata {
+    string ID = 1;
+    string IP = 2;
+    string Port = 3;
+    string KernelVer = 4;
+    // Distribution version
+    string DistVer = 5; 
+    string Arch = 6;
+    string FreeMem = 7; 
+    string DiskUsage = 8;  
+}
+
+message CaseMetadata {
+    string ID = 1;
+    string Name = 2;
+    string Tag = 3;
+    string Path = 4;
+    // Create time
+    string CTime = 5;
+    // Access time 
+    string ATime = 6; 
+    // Modify time
+    string MTime = 7;
+    uint64 Size = 8;
+}
+
+message JobMetadata {
+    enum Status {
+        STANDBY = 0;
+        RUNNING = 1;
+        FINISH = 2;
+        ERROR = 3;
+    }
+
+    string ID = 1;
+    string Name = 2;
+    Status Stat = 3;
+    int64 FinishCnt = 4;
+    // Create time 
+    string CTime = 5; 
+    // Finish time
+    string FTime = 6; 
+    CaseMetadata CaseInfo = 7;
+    repeated TaskMetadata Tasks = 8;
+}
+
+message TaskMetadata {
+     enum Status {
+        STANDBY = 0;
+        RUNNING = 1;
+        FINISH = 2;
+        ERROR = 3;
+    }
+
+    enum RoleType {
+        RESERVE = 0;
+        HOST  = 1;
+        CONTAINER = 2;
+    }
+
+    string ID = 1;
+    Status Stat = 2; 
+    // Create time
+    string CTime = 3;
+    // Finish time
+    string FTime = 4; 
+    RoleType Role = 5;
+    string JobID = 6;
+    string ResltPath = 7;
+    string ContainerID = 8;
+    CaseMetadata CaseInfo = 9;
+    NodeMetadata NodeInfo = 10;
+}
+
+
+// -------------------------------------------------
+// |                API Definition                 |
+// -------------------------------------------------
+// init: init workspace, legacy interface
+message InitRequest {
+}
+message InitResponse {
+}
+
+// ---------- Node Related API ----------
+// node inspect: get node metadata
+message NodeInspectRequest {
+    string ID = 1;
+}
+message NodeInspectResponse {
+    NodeMetadata Info = 1;
+}
+
+// node list/list: get nodes info list
+message NodeListRequest {
+}
+message NodeListResponse {
+    repeated NodeMetadata InfoList = 1;
+}
+
+
+// ---------- Case Related API ----------
+// case inspect: get testcase metadata
+message CaseInspectRequest {
+    string ID = 1;
+}
+message CaseInspectResponse {
+    CaseMetadata Info = 1;
+}
+
+// case list: get testcase list
+message CaseListRequest {
+}
+message CaseListResponse {
+    repeated CaseMetadata InfoList = 1;
+}
+
+// case add/add: add testcase to lkp-master
+message CaseAddRequest {
+    string Name  = 1;
+    string Tag = 2;
+    bytes  File = 3;
+}
+message CaseAddResponse {
+    CaseMetadata Info = 1;
+}
+
+// case update/update: update testcase to lkp-master
+message CaseUpdateRequest {
+    string Name = 1;
+    string Tag = 2;
+    bytes File = 3;
+}
+message CaseUpdateResponse {
+    CaseMetadata Info = 1;
+}
+
+// case push/push: push testcase to lkp-node
+message CasePushRequest {
+    string CaseID = 1;
+    repeated string NodeIDs = 2;
+}
+message CasePushResponse {
+    repeated string Rslts = 1;
+}
+message CasePushToAllRequest {
+    string CaseID = 1;
+}
+message CasePushToAllResponse {
+    repeated string Rslts = 1;
+}
+
+
+// ---------- Job Related API ----------
+// job inspect: get job metadata
+message JobInspectRequest {
+    string ID = 1;
+}
+message JobInspectResponse {
+    JobMetadata Info = 1;
+}
+
+// job list: get job list
+message JobListRequest {
+}
+message JobListResponse {
+    repeated JobMetadata InfoList = 1;
+}
+
+// job run: run a job
+message JobRunRequest {
+    string CaseID = 1;
+    string Name = 2;
+    int64 ContainerCnt = 3;
+    repeated string NodeIDs = 4;
+}
+message JobRunResponse {
+    repeated string Rslts = 1;
+}
+
+message JobRunToAllRequest {
+    string CaseID = 1;
+    string Name = 2;
+    int64 ContainerCnt = 3;
+}
+message JobRunToAllResponse {
+    repeated string Rslts = 1;
+}
+
+// ---------- Task Related API ----------
+// task inspect: get task metadata
+message TaskInspectRequest {
+    string ID = 1;
+}
+message TaskInspectResponse {
+    TaskMetadata Info = 1;
+}
+
+// task list: get task list
+message TaskListRequest {
+    string JobID = 1;
+}
+message TaskListResponse {
+    repeated TaskMetadata InfoList = 1;
+}
+
+message TaskResultRequest {
+    string ID = 1;
+}
+
+message TaskResultResponse {
+    // bytes  File = 1;
+    string File = 1;
+}
+
+service Cli {
+    rpc Init(InitRequest) returns(InitResponse); // legacy interface
+
+    rpc NodeInspect(NodeInspectRequest) returns(NodeInspectResponse);
+    rpc NodeList(NodeListRequest) returns(NodeListResponse);
+
+    rpc CaseInspect(CaseInspectRequest) returns(CaseInspectResponse);
+    rpc CaseList(CaseListRequest) returns(CaseListResponse);
+    rpc CaseAdd(CaseAddRequest) returns(CaseAddResponse);
+    rpc CaseUpdate(CaseUpdateRequest) returns(CaseUpdateResponse);
+    rpc CasePush(CasePushRequest) returns(CasePushResponse);
+    rpc CasePushToAll(CasePushToAllRequest) returns(CasePushToAllResponse);
+
+    rpc JobInspect(JobInspectRequest) returns(JobInspectResponse);
+    rpc JobList(JobListRequest) returns(JobListResponse);
+    rpc JobRun(JobRunRequest) returns (JobRunResponse);
+    rpc JobRunToAll(JobRunToAllRequest) returns (JobRunToAllResponse);
+
+    rpc TaskInspect(TaskInspectRequest) returns(TaskInspectResponse);
+    rpc TaskList(TaskListRequest) returns(TaskListResponse);
+    rpc TaskResult(TaskResultRequest) returns(TaskResultResponse);
+}

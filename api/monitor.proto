@@ -1,0 +1,58 @@
+syntax="proto3";
+package monitor;
+
+option go_package="./monitor";
+
+
+// -------------------------------------------------
+// |             Metadata Definition               |
+// -------------------------------------------------
+message StatusMetadata {
+    string FreeMem = 1; 
+    string DiskUsage = 2;  
+}
+
+// -------------------------------------------------
+// |                API Definition                 |
+// -------------------------------------------------
+message ConnectRequest {
+    string KernelVer = 1;
+    // Distribution version
+    string DistVer = 2; 
+    string Arch = 3;
+    string SchedPort = 4;
+    StatusMetadata Stat = 5;
+}
+
+message ConnectResponse {
+    string ID = 1;
+}
+
+message StatUpdateRequest {
+    StatusMetadata Stat = 1;
+}
+
+message StatUpdateResponse {
+}
+
+message DisconnectRequest {
+    string ID = 1;
+}
+
+message DisconnectResponse {
+}
+
+message TaskFinishRequest {
+    string ID = 1;
+    bytes File = 2;
+}
+
+message TaskFinishResponse  {
+}
+
+service Monitor {
+    rpc Connect(ConnectRequest) returns(ConnectResponse);
+    rpc StatUpdate(StatUpdateRequest) returns(StatUpdateResponse);
+    rpc Disconnect(DisconnectRequest) returns(DisconnectResponse);
+    rpc TaskFinish(TaskFinishRequest) returns(TaskFinishResponse);
+}
