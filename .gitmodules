@@ -1,3 +1,0 @@
-[submodule "src/muduo"]
-	path = src/muduo
-	url = https://github.com/BIGWJZ/muduo.git
