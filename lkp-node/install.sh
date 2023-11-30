@@ -15,20 +15,6 @@ git clone https://github.com/intel/lkp-tests.git
 cd /lkp-tests
 make install
 
-# install common dependencies
-sed -i '/libc6-dev:i386 (x86_64)/ s/^/# /' /lkp-tests/distro/depends/lkp-dev
-yes | lkp install
-
-# install runtime dependencies
-yum -y install elfutils-libelf-devel elfutils-devel libunwind libunwind-devel slang-devel perl-ExtUtils-Embed \
-    platform-python-devel libunwind-devel python3-devel \
-    https://rpmfind.net/linux/centos/7.9.2009/os/x86_64/Packages/btrfs-progs-4.9.1-1.el7.x86_64.rpm \
-    https://rpmfind.net/linux/epel/7/x86_64/Packages/f/f2fs-tools-1.12.0-1.el7.x86_64.rpm
-yum clean all
-rm -rf /var/cache/yum
-rpm -i http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/libtraceevent-1.5.3-1.el8.x86_64.rpm --force
-rpm -i http://ftp.pasteur.fr/mirrors/CentOS/8-stream/PowerTools/x86_64/os/Packages/libtraceevent-devel-1.5.3-1.el8.x86_64.rpm
-
 # modify lkp-tests dependency
 sed -i  -e '$a \
             default-jdk: java-1.8.0-openjdk-devel\n\
@@ -52,3 +38,17 @@ sed -i  -e '$a \
             btrfs-progs:\n\
             f2fs-tools:\n' \
         -e '/^python3:/d'  /lkp-tests/distro/adaptation/centos
+
+# install common dependencies
+sed -i '/libc6-dev:i386 (x86_64)/ s/^/# /' /lkp-tests/distro/depends/lkp-dev
+yes | lkp install
+
+# install runtime dependencies
+yum -y install elfutils-libelf-devel elfutils-devel libunwind libunwind-devel slang-devel perl-ExtUtils-Embed \
+    platform-python-devel libunwind-devel python3-devel \
+    https://rpmfind.net/linux/centos/7.9.2009/os/x86_64/Packages/btrfs-progs-4.9.1-1.el7.x86_64.rpm \
+    https://rpmfind.net/linux/epel/7/x86_64/Packages/f/f2fs-tools-1.12.0-1.el7.x86_64.rpm
+yum clean all
+rm -rf /var/cache/yum
+rpm -i http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/Packages/libtraceevent-1.5.3-1.el8.x86_64.rpm --force
+rpm -i http://ftp.pasteur.fr/mirrors/CentOS/8-stream/PowerTools/x86_64/os/Packages/libtraceevent-devel-1.5.3-1.el8.x86_64.rpm
