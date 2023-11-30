@@ -40,6 +40,12 @@ podman-compose up -d
 
 #### 编译lkp-extent项目
 
+进入编译容器：
+
+```shell
+podman exec -it golang1_19 bash
+```
+
 拉取lkp-extent源码：
 
 ```shell
