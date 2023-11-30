@@ -3,7 +3,11 @@
 推荐使用容器构建项目。相较于传统的编译方式，适用容器构建项目能够保证编译环境的一致性，且多编译器版本切换更加方便。在OpencloudOS环境中默认使用podman容器引擎，这里我们使用podman-compose容器编排工具搭建lkp-extent的编译环境：
 
 ```shell
-yum -y install podman podman-compose
+# 安装podman
+yum -y install podman
+
+# 安装podman-compose
+pip3 install podman-compose
 ```
 
 
