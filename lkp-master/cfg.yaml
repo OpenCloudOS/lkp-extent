@@ -1,0 +1,21 @@
+service:
+  cli-daemon:
+    port: 8999               # cli服务的端口号
+    sock: /var/run/lkp.sock  # cli服务监听的unix socket文件
+
+  monitor:
+    port: 8883               # 监控lkp-node的服务端口号
+    keepalive: 10            # 检测lkp-node空闲链接的时间间隔 (单位: 秒)
+    keepalivetimeout: 5      # 当探活请求超过设置时间后，master主动关闭不活跃链接 (单位: 秒)
+
+resource:
+    testcase:
+      limit: 128             # 配置显示test case列表的最大长度
+    job:
+      limit: 2048            # 配置显示job列表的最大长度
+    task:
+      limit: 65536           # 配置显示task列表的最大长度
+
+feature:
+  timestamp:
+    fmt: 2006-01-02 15:04:05 # 打印时间戳的格式

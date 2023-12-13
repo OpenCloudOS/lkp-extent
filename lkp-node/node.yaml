@@ -1,0 +1,14 @@
+lkp-master:
+  monitor:
+    ip: 127.0.0.1              # lkp-master的服务IP地址
+    port: 8883                 # lkp-master的服务端口号
+    
+lkp-node:
+  proxy:
+    port: 28928                # 本地客户端用来接收lkp指令的服务端口号
+
+testcase:
+  path: "/var/run/lkp/cases/"  # 指定远程分发测试用例存放的目录
+
+result:
+  path: "/var/run/lkp/result/" # 指定测试结果包搞存放的目录
